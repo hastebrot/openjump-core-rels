@@ -117,7 +117,7 @@ public class MergeSelectedPolygonsWithNeighbourPlugIn extends ThreadedBasePlugIn
         FeatureInstaller featureInstaller = new FeatureInstaller(context.getWorkbenchContext());
     	featureInstaller.addMainMenuItem(
     	        this,								//exe
-                new String[] {MenuNames.TOOLS, MenuNames.TOOLS_ANALYSIS, MenuNames.ONELAYER}, 	//menu path
+                new String[] {MenuNames.TOOLS, MenuNames.TOOLS_EDIT_GEOMETRY}, 	//menu path
                 this.getName() + "...", //name methode .getName recieved by AbstractPlugIn 
                 false,			//checkbox
                 null,			//icon
@@ -243,6 +243,8 @@ public class MergeSelectedPolygonsWithNeighbourPlugIn extends ThreadedBasePlugIn
 					Feature f2merge = null;
 					for (Iterator iterator2 = candidates.iterator(); iterator2.hasNext();) {
 						Feature ft = (Feature) iterator2.next();
+						// Fix bug 3060942 don't try to union f with itself !
+						if (ft.getID() == ftemp.getID()) continue;
 						if(gtemp.intersects(ft.getGeometry())){
 							double tarea = ft.getGeometry().getArea();
 							if(tarea > area){

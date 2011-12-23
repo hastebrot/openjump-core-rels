@@ -25,17 +25,29 @@
  * (250)385-6040 www.vividsolutions.com
  */
 package com.vividsolutions.jump.workbench.ui.plugin;
+
 import com.vividsolutions.jump.I18N;
 import com.vividsolutions.jump.util.FileUtil;
 import com.vividsolutions.jump.workbench.plugin.PlugInContext;
 import com.vividsolutions.jump.workbench.ui.GUIUtil;
+import com.vividsolutions.jump.workbench.ui.images.IconLoader;
 import java.io.File;
-import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileFilter;
+import javax.swing.ImageIcon;
+import javax.swing.JFileChooser;
+import org.openjump.core.ui.plugin.file.SaveLayersWithoutDataSourcePlugIn;
+
 public class SaveProjectAsPlugIn extends AbstractSaveProjectPlugIn {
-    public static final FileFilter JUMP_PROJECT_FILE_FILTER = GUIUtil
-            .createFileFilter(I18N.get("ui.plugin.SaveProjectAsPlugIn.jump-project-files"), new String[]{"jmp", "jcs"});
+    
+    public static final ImageIcon ICON = IconLoader.icon("layout_save.png");
+    
+    public static final FileFilter JUMP_PROJECT_FILE_FILTER =
+        GUIUtil.createFileFilter(I18N.get("ui.plugin.SaveProjectAsPlugIn.jump-project-files"),
+                                 new String[]{"jmp", "jcs"});
+    
+        
     private JFileChooser fileChooser;
+    
     public void initialize(PlugInContext context) throws Exception {
         //Don't initialize fileChooser at field declaration; otherwise get
         // intermittent
@@ -63,9 +75,11 @@ public class SaveProjectAsPlugIn extends AbstractSaveProjectPlugIn {
         fileChooser.addChoosableFileFilter(GUIUtil.ALL_FILES_FILTER);
         fileChooser.setFileFilter(JUMP_PROJECT_FILE_FILTER);
     }
+    
     public String getName() {
         return I18N.get("ui.plugin.SaveProjectAsPlugIn.save-project-as");
     }
+    
     public boolean execute(PlugInContext context) throws Exception {
         reportNothingToUndoYet(context);
         if (context.getTask().getProjectFile() != null) {
@@ -76,8 +90,20 @@ public class SaveProjectAsPlugIn extends AbstractSaveProjectPlugIn {
             return false;
         }
         File file = fileChooser.getSelectedFile();
+        
+        java.util.Collection collection = ignoredLayers(context.getTask());
+        if (collection.size() > 0) {
+            // Starting with OpenJUMP 1.4.1beta (2011-04-20), the plugin uses
+            // org.openjump.core.ui.plugin.file.SaveLayersWithoutDataSourcePlugIn
+            // to give the user the possibility to save unsaved layers to HD
+            // before saving the project
+            new org.openjump.core.ui.plugin.file.SaveLayersWithoutDataSourcePlugIn()
+            .execute(context, collection, FileUtil.removeExtensionIfAny(file));
+        }
+        
         file = FileUtil.addExtensionIfNone(file, "jmp");
         save(context.getTask(), file, context.getWorkbenchFrame());
         return true;
     }
+    
 }

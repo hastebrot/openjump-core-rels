@@ -45,7 +45,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
 
-import sun.misc.BASE64Encoder;
+import net.iharder.Base64;
 
 import javax.swing.JOptionPane;
 
@@ -116,20 +116,22 @@ public void initialize() throws IOException {
             URLConnection con = requestUrl.openConnection();
             if(requestUrl.getUserInfo() != null)
                 con.setRequestProperty("Authorization", "Basic " +
-                        new BASE64Encoder().encode(requestUrl.getUserInfo().getBytes()));
+                        Base64.encodeBytes(requestUrl.getUserInfo().getBytes()));
             Parser p = new Parser();
             cap = p.parseCapabilities( this, con.getInputStream() );
             String url1 = cap.getService().getServerUrl();
             String url2 = cap.getGetMapURL();
             if(!url1.equals(url2)){
                 //if the difference is only in credentials then use url1 else ask from user
-                if(alertDifferingURL && !new URL(url1).equals(new URL(url2))) {
+                if(!new URL(url1).equals(new URL(url2)) && alertDifferingURL) {
                     int resp = showConfirmDialog(null, I18N.getMessage("com.vididsolutions.wms.WMService.Other-GetMap-URL-Found",
                             new Object[]{url2}), null, YES_NO_OPTION);
                     if(resp == NO_OPTION) {
                         cap.setGetMapURL(url1);
                     }
                 } else {
+                    //changed 24.06.2011 (Wilfried Hornburg, LGLN) url1 --> url2; original: cap.setGetMapURL(url1);
+                    //revert to url1, following Jukka's advice a discussion is on-going on JPP mailing list
                     cap.setGetMapURL(url1);
                 }
             }

@@ -56,6 +56,7 @@ import java.io.File;
 import java.io.IOException;
 
 import javax.imageio.ImageIO;
+import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -79,14 +80,15 @@ import com.vividsolutions.jump.workbench.ui.MenuNames;
 import com.vividsolutions.jump.workbench.ui.TreeLayerNamePanel;
 import com.vividsolutions.jump.workbench.ui.plugin.FeatureInstaller;
 import com.vividsolutions.jump.workbench.ui.renderer.style.BasicStyle;
+import org.openjump.core.ui.images.IconLoader;
 
 /**
  * ... 
  * 
  * @author <a href="mailto:taddei@lat-lon.de">Ugo Taddei</a>
- * @author last edited by: $Author: mentaer $
+ * @author last edited by: $Author: michaudm $
  * 
- * @version 2.0, $Revision: 1816 $, $Date: 2009-11-04 05:10:38 +0100 (Mi, 04. Nov 2009) $
+ * @version 2.0, $Revision: 2261 $, $Date: 2011-05-08 18:59:01 +0200 (So, 08. Mai 2011) $
  * 
  * @since 2.0
  */
@@ -118,10 +120,15 @@ public class SaveLegendPlugIn extends AbstractPlugIn {
                         .createWindowWithLayerManagerMustBeActiveCheck()).add(
                 enableCheckFactory.createExactlyNLayersMustBeSelectedCheck(1));
         
-        new FeatureInstaller(context.getWorkbenchContext())
-        .addMainMenuItemWithJava14Fix(this, new String[]{MenuNames.LAYER},
-                this.getName() + "...", false, null, enableCheck);
-	}    
+        context.getFeatureInstaller().addPopupMenuItem(
+            context.getWorkbenchFrame().getLayerNamePopupMenu(),
+            this, new String[]{MenuNames.STYLE},
+            this.getName() + "...", false, getIcon(), enableCheck);
+	}
+	
+	public ImageIcon getIcon() {
+        return IconLoader.icon("save_legend.png");
+    }
 	
 	public boolean execute(PlugInContext context) throws Exception {
 		

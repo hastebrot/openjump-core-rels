@@ -5,7 +5,6 @@ import com.vividsolutions.jts.geom.Geometry;
 
 import com.vividsolutions.jump.I18N;
 import com.vividsolutions.jump.datastore.AdhocQuery;
-import com.vividsolutions.jump.datastore.postgis.PostgisFeatureInputStream;
 import com.vividsolutions.jump.feature.FeatureDataset;
 import com.vividsolutions.jump.io.FeatureInputStream;
 import com.vividsolutions.jump.task.TaskMonitor;
@@ -14,13 +13,22 @@ import com.vividsolutions.jump.workbench.datastore.ConnectionManager;
 import com.vividsolutions.jump.workbench.model.Layer;
 import com.vividsolutions.jump.workbench.model.Layerable;
 import com.vividsolutions.jump.workbench.plugin.PlugInContext;
+import com.vividsolutions.jump.workbench.ui.MenuNames;
 
-
-public class RunDatastoreQueryPlugIn extends
-    AbstractAddDatastoreLayerPlugIn {
+/**
+ * This PlugIn runs a SQL query against a datastore and creates a Layer
+ * from the result.
+ */
+public class RunDatastoreQueryPlugIn extends AbstractAddDatastoreLayerPlugIn {
 
     protected ConnectionPanel createPanel( PlugInContext context ) {
         return new RunDatastoreQueryPanel( context.getWorkbenchContext() );
+    }
+    
+    public void initialize(final PlugInContext context) throws Exception {
+        super.initialize(context);
+        context.getFeatureInstaller()
+               .addMainMenuItem(new String[]{MenuNames.FILE},this,3);
     }
 
     protected Layerable createLayerable(
@@ -43,8 +51,9 @@ public class RunDatastoreQueryPlugIn extends
         monitor.allowCancellationRequests();
         monitor.report( I18N.get("jump.workbench.ui.plugin.datastore.AddDatastoreLayerPlugIn.Creating-layer") );
 
-        int maxFeatures = ( ( Integer ) LangUtil.ifNull( panel.getMaxFeatures(),
-            new Integer( Integer.MAX_VALUE ) ) ).intValue();
+        //int maxFeatures = ((Integer)LangUtil.ifNull( panel.getMaxFeatures(),
+        //    new Integer(Integer.MAX_VALUE))).intValue();
+        
         // added by Michael Michaud on 2009-11-22 to use aliases representing
         // view rectangle or selection in a query
         String driver = panel.getConnectionDescriptor().getDataStoreDriverClassName();
@@ -53,32 +62,29 @@ public class RunDatastoreQueryPlugIn extends
             query = expandQuery(query, context);
         }
         // end
-        FeatureInputStream featureInputStream = ConnectionManager.instance(
-            context.getWorkbenchContext() )
-            .getOpenConnection( panel.getConnectionDescriptor() ).execute(
-            new AdhocQuery(query) );
+        FeatureInputStream featureInputStream =
+            ConnectionManager.instance(context.getWorkbenchContext())
+                .getOpenConnection(panel.getConnectionDescriptor())
+                .execute(new AdhocQuery(query));
         try {
             FeatureDataset featureDataset = new FeatureDataset(
-                featureInputStream.getFeatureSchema() );
+                featureInputStream.getFeatureSchema());
             int i = 0;
-            while ( featureInputStream.hasNext()
-                 && featureDataset.size() < maxFeatures
-                 && !monitor.isCancelRequested() ) {
-                featureDataset.add( featureInputStream.next() );
+            while (featureInputStream.hasNext() && !monitor.isCancelRequested()) {
+                featureDataset.add(featureInputStream.next());
                 monitor.report( ++i, -1, I18N.get("jump.workbench.ui.plugin.datastore.RunDatastoreQueryPlugIn.features"));
             }
-            // Added by Michael Michaud on 2008-08-10 to avoid very long layer
-            // names issued from long queries (keep about 64 characters)
-            String name = panel.getQuery();
-            if (name != null) {
-                // remove the column definition part of the select
-                name = name.replaceAll("(?s).*from\\s+","").trim();
-                name = context.getLayerManager().uniqueLayerName(
-                    name.substring(0, Math.min(name.length(), 64)).trim()
-                );
-            }
-            return new Layer( name, context.getLayerManager()
-                .generateLayerFillColor(), featureDataset, context.getLayerManager() );
+            String name = panel.getLayerName();
+            Layer layer = new Layer(name,
+                context.getLayerManager().generateLayerFillColor(),
+                featureDataset, context.getLayerManager());
+            layer.setDataSourceQuery(new com.vividsolutions.jump.io.datasource.DataSourceQuery(
+                new DataStoreQueryDataSource(name,
+                    panel.getQuery(),
+                    panel.getConnectionDescriptor(),
+                    context.getWorkbenchContext()),
+                panel.getQuery(), name));
+            return layer;
         }
         finally {
             // This code had been added as an attempt to cancel a long running query

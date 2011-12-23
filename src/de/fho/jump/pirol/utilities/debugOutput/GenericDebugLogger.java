@@ -2,10 +2,10 @@
  * Created on 17.05.2005 for PIROL
  *
  * SVN header information:
- *  $Author: mentaer $
- *  $Rev: 1664 $
- *  $Date: 2009-02-23 01:18:43 +0100 (Mo, 23. Feb 2009) $
- *  $Id: GenericDebugLogger.java 1664 2009-02-23 00:18:43Z mentaer $
+ *  $Author: michaudm $
+ *  $Rev: 2259 $
+ *  $Date: 2011-05-08 12:47:24 +0200 (So, 08. Mai 2011) $
+ *  $Id: GenericDebugLogger.java 2259 2011-05-08 10:47:24Z michaudm $
  */
 package de.fho.jump.pirol.utilities.debugOutput;
 
@@ -32,9 +32,9 @@ import de.fho.jump.pirol.utilities.settings.PirolPlugInSettings;
  * <br>Project: PIROL (2005),
  * <br>Subproject: Daten- und Wissensmanagement
  * 
- * @version $Rev: 1664 $
+ * @version $Rev: 2259 $
  * 
- * @see de.fho.jump.pirol.utilities.PirolPlugInSettings
+ * @see de.fho.jump.pirol.utilities.settings.PirolPlugInSettings
  * @see PersonalLogger
  */
 public final class GenericDebugLogger {

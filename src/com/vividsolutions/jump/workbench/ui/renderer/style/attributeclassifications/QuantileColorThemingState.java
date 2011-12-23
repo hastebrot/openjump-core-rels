@@ -126,9 +126,12 @@ public class QuantileColorThemingState implements ColorThemingStylePanel.State {
     public Collection filterAttributeValues(SortedSet attributeValues) {
         //-1 because one row in the table is reserved for "all other values". [Jon Aquino]
     	//int classCount = getRangeCount() - 1;
-
+        Collection filteredValues = new ArrayList();
+        if (attributeValues.size() == 0) {
+    	    return filteredValues;
+    	}
     	// -1 deleted because class range is false
-    	int classCount = getRangeCount();
+    	int classCount = Math.min(getRangeCount(), attributeValues.size());
 
     	//-- [sstein 15.Feb. 2009] 
     	//   replaced O-Bedels code by own code to be consistent
@@ -161,7 +164,6 @@ public class QuantileColorThemingState implements ColorThemingStylePanel.State {
 		}
         double[] breaks = Classifier1D.classifyEqualNumber(data, classCount);
         double minVal = org.math.array.DoubleArray.min(data);
-        Collection filteredValues = new ArrayList();
         //add minVal as smallest value
         if(isInteger){
             filteredValues.add(new Integer((int)minVal));

@@ -42,7 +42,6 @@ import javax.swing.JPopupMenu;
 import javax.swing.JToggleButton;
 
 import org.openjump.OpenJumpConfiguration;
-import org.openjump.core.ui.plugin.tools.ZoomRealtimeTool;
 
 import com.vividsolutions.jts.util.Assert;
 import com.vividsolutions.jump.I18N;
@@ -68,6 +67,7 @@ import com.vividsolutions.jump.workbench.ui.CloneableInternalFrame;
 import com.vividsolutions.jump.workbench.ui.GUIUtil;
 import com.vividsolutions.jump.workbench.ui.LayerViewPanel;
 import com.vividsolutions.jump.workbench.ui.MenuNames;
+import com.vividsolutions.jump.workbench.ui.OptionsDialog;
 import com.vividsolutions.jump.workbench.ui.WorkbenchFrame;
 import com.vividsolutions.jump.workbench.ui.cursortool.CursorTool;
 import com.vividsolutions.jump.workbench.ui.cursortool.DrawPolygonFenceTool;
@@ -100,7 +100,7 @@ import com.vividsolutions.jump.workbench.ui.plugin.InstallStandardFeatureTextWri
 import com.vividsolutions.jump.workbench.ui.plugin.MapToolTipsPlugIn;
 import com.vividsolutions.jump.workbench.ui.plugin.MoveLayerablePlugIn;
 import com.vividsolutions.jump.workbench.ui.plugin.NewTaskPlugIn;
-import com.vividsolutions.jump.workbench.ui.plugin.OpenProjectPlugIn;
+//import com.vividsolutions.jump.workbench.ui.plugin.OpenProjectPlugIn;
 import com.vividsolutions.jump.workbench.ui.plugin.OptionsPlugIn;
 import com.vividsolutions.jump.workbench.ui.plugin.OutputWindowPlugIn;
 import com.vividsolutions.jump.workbench.ui.plugin.RedoPlugIn;
@@ -127,8 +127,8 @@ import com.vividsolutions.jump.workbench.ui.plugin.clipboard.PasteLayersPlugIn;
 import com.vividsolutions.jump.workbench.ui.plugin.datastore.AddDatastoreLayerPlugIn;
 import com.vividsolutions.jump.workbench.ui.plugin.datastore.InstallDatastoreLayerRendererHintsPlugIn;
 import com.vividsolutions.jump.workbench.ui.plugin.datastore.RefreshDataStoreLayerPlugin;
-import com.vividsolutions.jump.workbench.ui.plugin.datastore.RunDatastoreQueryPlugIn;
-import com.vividsolutions.jump.workbench.ui.plugin.imagery.AddImageLayerPlugIn;
+//import com.vividsolutions.jump.workbench.ui.plugin.datastore.RunDatastoreQueryPlugIn;
+//import com.vividsolutions.jump.workbench.ui.plugin.imagery.AddImageLayerPlugIn;
 import com.vividsolutions.jump.workbench.ui.plugin.imagery.ImageLayerManagerPlugIn;
 import com.vividsolutions.jump.workbench.ui.plugin.imagery.InstallReferencedImageFactoriesPlugin;
 import com.vividsolutions.jump.workbench.ui.plugin.scalebar.InstallScaleBarPlugIn;
@@ -165,6 +165,14 @@ import com.vividsolutions.jump.workbench.ui.zoom.ZoomToSelectedItemsPlugIn;
 import com.vividsolutions.jump.workbench.ui.zoom.ZoomTool;
 
 import de.latlon.deejump.plugin.style.DeeChangeStylesPlugIn;
+import org.openjump.core.ui.plugin.tools.AdvancedMeasureOptionsPanel;
+import org.openjump.core.ui.plugin.tools.AdvancedMeasurePlugin;
+import org.openjump.core.ui.plugin.tools.AdvancedMeasureTool;
+import org.openjump.core.ui.plugin.tools.ZoomRealtimeTool;
+import org.openjump.core.ui.plugin.view.ShowScalePlugIn;
+import org.openjump.core.ui.plugin.view.helpclassescale.InstallShowScalePlugIn;
+import org.openjump.core.ui.plugin.view.helpclassescale.InstallShowScalePlugIn;
+import org.openjump.core.ui.plugin.view.helpclassescale.ShowScaleRenderer;
 
 /**
  * Initializes the Workbench with various menus and cursor tools. Accesses the
@@ -176,6 +184,9 @@ public class JUMPConfiguration implements Setup {
 	 * Built-in plugins must be defined as instance variables, since
 	 * they are located for iniatialization via reflection on this class
 	 */
+	
+	private InstallShowScalePlugIn installShowScalePlugIn = new InstallShowScalePlugIn();
+	
     private InstallScaleBarPlugIn installScaleBarPlugIn = new InstallScaleBarPlugIn();
 
     private InstallGridPlugIn installGridPlugIn = new InstallGridPlugIn();
@@ -247,7 +258,8 @@ public class JUMPConfiguration implements Setup {
 
     private NewTaskPlugIn newTaskPlugIn = new NewTaskPlugIn();
 
-    private OpenProjectPlugIn openProjectPlugIn = new OpenProjectPlugIn();
+    // Moved to OpenJUMPConfigurationPlugIn
+    //private OpenProjectPlugIn openProjectPlugIn = new OpenProjectPlugIn();
 
 
     private PasteItemsPlugIn pasteItemsPlugIn = new PasteItemsPlugIn();
@@ -268,6 +280,8 @@ public class JUMPConfiguration implements Setup {
             saveProjectAsPlugIn);
 
     private SelectFeaturesInFencePlugIn selectFeaturesInFencePlugIn = new SelectFeaturesInFencePlugIn();
+    
+    private ShowScalePlugIn showScalePlugIn = new ShowScalePlugIn();
 
     private ScaleBarPlugIn scaleBarPlugIn = new ScaleBarPlugIn();
 
@@ -390,8 +404,8 @@ public class JUMPConfiguration implements Setup {
         //[sstein 2.June.2008] added back due to table list history (need to check other way?)
         featureInstaller.addPopupMenuItem(workbenchContext.getWorkbench()
                 .getFrame().getCategoryPopupMenu(), addDatastoreLayerPlugIn,
-                addDatastoreLayerPlugIn.getName() + "...", false, null,
-                null);
+                addDatastoreLayerPlugIn.getName() + "...",
+                false, addDatastoreLayerPlugIn.ICON, null);
         /* //[sstein 21.Mar.2008] removed since now contained in new open menu
         featureInstaller.addPopupMenuItem(workbenchContext.getWorkbench()
                 .getFrame().getCategoryPopupMenu(), addWMSQueryPlugIn,
@@ -483,22 +497,17 @@ public class JUMPConfiguration implements Setup {
         featureInstaller.addPopupMenuItem(layerNamePopupMenu, selectablePlugIn,
                 selectablePlugIn.getName(), true, selectablePlugIn.ICON, selectablePlugIn
                         .createEnableCheck(workbenchContext));
-
+        featureInstaller.addPopupMenuItem(layerNamePopupMenu,
+                removeSelectedLayersPlugIn, removeSelectedLayersPlugIn
+                        .getName(), false, RemoveSelectedLayersPlugIn.ICON, removeSelectedLayersPlugIn
+                        .createEnableCheck(workbenchContext));
+        
         layerNamePopupMenu.addSeparator(); // ===================
+        
         featureInstaller.addPopupMenuItem(layerNamePopupMenu,
                 zoomToLayerPlugIn, zoomToLayerPlugIn.getName(), false, ZoomToLayerPlugIn.ICON,
                 zoomToLayerPlugIn.createEnableCheck(workbenchContext));
-        featureInstaller.addPopupMenuItem(layerNamePopupMenu,
-                changeStylesPlugIn, changeStylesPlugIn.getName() + "...",
-                false, GUIUtil.toSmallIcon(changeStylesPlugIn.getIcon()),
-                changeStylesPlugIn.createEnableCheck(workbenchContext));
-        featureInstaller.addPopupMenuItem(layerNamePopupMenu, copyStylesPlugIn,
-                copyStylesPlugIn.getName(), false, null,
-                CopyStylesPlugIn.createEnableCheck(workbenchContext));
-        featureInstaller.addPopupMenuItem(layerNamePopupMenu, pasteStylesPlugIn,
-                pasteStylesPlugIn.getName(), false, null,
-                PasteStylesPlugIn.createEnableCheck(workbenchContext));
-
+        
         featureInstaller.addPopupMenuItem(layerNamePopupMenu,
                 viewAttributesPlugIn, viewAttributesPlugIn.getName(), false,
                 GUIUtil.toSmallIcon(viewAttributesPlugIn.getIcon()),
@@ -506,17 +515,29 @@ public class JUMPConfiguration implements Setup {
         featureInstaller.addPopupMenuItem(layerNamePopupMenu, viewSchemaPlugIn,
                 viewSchemaPlugIn.getName(), false, ViewSchemaPlugIn.ICON,
                 ViewSchemaPlugIn.createEnableCheck(workbenchContext));
+        
+        featureInstaller.addPopupMenuItem(layerNamePopupMenu,
+                changeStylesPlugIn, new String[]{MenuNames.STYLE}, changeStylesPlugIn.getName() + "...",
+                false, GUIUtil.toSmallIcon(changeStylesPlugIn.getIcon()),
+                changeStylesPlugIn.createEnableCheck(workbenchContext));
+        featureInstaller.addPopupMenuItem(layerNamePopupMenu, copyStylesPlugIn,
+                new String[]{MenuNames.STYLE}, copyStylesPlugIn.getName(),
+                false, GUIUtil.toSmallIcon(copyStylesPlugIn.getIcon()),
+                CopyStylesPlugIn.createEnableCheck(workbenchContext));
+        featureInstaller.addPopupMenuItem(layerNamePopupMenu, pasteStylesPlugIn,
+                new String[]{MenuNames.STYLE}, pasteStylesPlugIn.getName(),
+                false, GUIUtil.toSmallIcon(pasteStylesPlugIn.getIcon()),
+                PasteStylesPlugIn.createEnableCheck(workbenchContext));
 
+        featureInstaller.addPopupMenuItem(layerNamePopupMenu, refreshDataStoreLayerPlugin,
+            new String[]{MenuNames.DATASTORE}, refreshDataStoreLayerPlugin.getName(), false, RefreshDataStoreLayerPlugin.ICON,
+                RefreshDataStoreLayerPlugin.createEnableCheck(workbenchContext));
         featureInstaller.addPopupMenuItem(layerNamePopupMenu, imageLayerManagerPlugIn,
                 imageLayerManagerPlugIn.getName() + "...", false, null,
                 ImageLayerManagerPlugIn.createEnableCheck(workbenchContext));
-        
-        featureInstaller.addPopupMenuItem(layerNamePopupMenu, refreshDataStoreLayerPlugin,
-        		refreshDataStoreLayerPlugin.getName() + "...", false, RefreshDataStoreLayerPlugin.ICON,
-                RefreshDataStoreLayerPlugin.createEnableCheck(workbenchContext));
-
 
         layerNamePopupMenu.addSeparator(); // ===================
+        
         /*featureInstaller.addPopupMenuItem(layerNamePopupMenu,
                 saveDatasetAsFilePlugIn, saveDatasetAsFilePlugIn.getName() + "...",
                 false, null, AbstractSaveDatasetAsPlugIn
@@ -543,10 +564,7 @@ public class JUMPConfiguration implements Setup {
                 copySelectedLayersPlugIn, copySelectedLayersPlugIn
                         .getNameWithMnemonic(), false, copySelectedLayersPlugIn.ICON,
                 copySelectedLayersPlugIn.createEnableCheck(workbenchContext));
-        featureInstaller.addPopupMenuItem(layerNamePopupMenu,
-                removeSelectedLayersPlugIn, removeSelectedLayersPlugIn
-                        .getName(), false, RemoveSelectedLayersPlugIn.ICON, removeSelectedLayersPlugIn
-                        .createEnableCheck(workbenchContext));
+        
 
         layerNamePopupMenu.addSeparator(); // ===================
         featureInstaller.addPopupMenuItem(layerNamePopupMenu,
@@ -671,10 +689,10 @@ public class JUMPConfiguration implements Setup {
                 saveDatasetAsPlugIn.getName() + "...", false, SaveDatasetAsPlugIn.ICON,
                 SaveDatasetAsPlugIn.createEnableCheck(workbenchContext));  
         featureInstaller.addMainMenuItemWithJava14Fix(saveProjectPlugIn, new String[] {MenuNames.FILE},
-                saveProjectPlugIn.getName(), false, null, checkFactory
+                saveProjectPlugIn.getName(), false, SaveProjectPlugIn.ICON, checkFactory
                         .createTaskWindowMustBeActiveCheck());
         featureInstaller.addMainMenuItemWithJava14Fix(saveProjectAsPlugIn, new String[] {MenuNames.FILE},
-                saveProjectAsPlugIn.getName() + "...", false, null, checkFactory
+                saveProjectAsPlugIn.getName() + "...", false, SaveProjectAsPlugIn.ICON, checkFactory
                         .createTaskWindowMustBeActiveCheck());  
         FeatureInstaller.addMainMenu(featureInstaller, new String[] {
                 MenuNames.FILE
@@ -683,7 +701,7 @@ public class JUMPConfiguration implements Setup {
         		saveImageAsPlugIn, 
         	      new String[] {
         		          MenuNames.FILE, MenuNames.FILE_SAVEVIEW
-        		        }, saveImageAsPlugIn.getName(), 
+        		        }, saveImageAsPlugIn.getName() + "...", 
 				false,
 				null, 
 				SaveImageAsPlugIn.createEnableCheck(workbenchContext));    
@@ -736,7 +754,7 @@ public class JUMPConfiguration implements Setup {
 		//-- VIEW        
         editingPlugIn.createMainMenuItem(new String[] { MenuNames.VIEW}, GUIUtil
                 .toSmallIcon(EditingPlugIn.ICON), workbenchContext);
-        featureInstaller.addMainMenuItemWithJava14Fix(copyImagePlugIn, new String[]{MenuNames.VIEW},
+        featureInstaller.addMainMenuItemWithJava14Fix(copyImagePlugIn, new String[]{MenuNames.FILE},
                 copyImagePlugIn.getName(), false, copyImagePlugIn.ICON, CopyImagePlugIn
                         .createEnableCheck(workbenchContext));        
         featureInstaller.addMenuSeparator(MenuNames.VIEW); // ===================
@@ -790,23 +808,37 @@ public class JUMPConfiguration implements Setup {
         featureInstaller.addMenuSeparator(MenuNames.VIEW); // ===================
         featureInstaller
         	.addMainMenuItemWithJava14Fix(
+                        showScalePlugIn,
+                        new String[] {MenuNames.VIEW},
+                        showScalePlugIn.getName(),
+                        true,
+                        null,
+                        new MultiEnableCheck()
+                                .add(checkFactory.createWindowWithLayerViewPanelMustBeActiveCheck())
+                                .add(new EnableCheck() {
+                                    public String check(JComponent component) {
+                                        ((JCheckBoxMenuItem) component)
+                                                .setSelected(ShowScaleRenderer
+                                                        .isEnabled(workbenchContext
+                                                                .getLayerViewPanel()));
+                                        return null;
+                                    }
+                                }));
+        featureInstaller
+        	.addMainMenuItemWithJava14Fix(
                         scaleBarPlugIn,
                         new String[] { MenuNames.VIEW},
                         scaleBarPlugIn.getName(),
                         true,
                         null,
                         new MultiEnableCheck()
-                                .add(
-                                        checkFactory
-                                                .createWindowWithLayerViewPanelMustBeActiveCheck())
+                                .add(checkFactory.createWindowWithLayerViewPanelMustBeActiveCheck())
                                 .add(new EnableCheck() {
-
                                     public String check(JComponent component) {
                                         ((JCheckBoxMenuItem) component)
                                                 .setSelected(ScaleBarRenderer
                                                         .isEnabled(workbenchContext
                                                                 .getLayerViewPanel()));
-
                                         return null;
                                     }
                                 }));
@@ -825,11 +857,14 @@ public class JUMPConfiguration implements Setup {
                 .getName()
                 + "...", false, null, null);
         */
-        featureInstaller.addMainMenuItemWithJava14Fix(outputWindowPlugIn, new String[] {MenuNames.WINDOW},
-                outputWindowPlugIn.getName(), false, GUIUtil
-                        .toSmallIcon(outputWindowPlugIn.getIcon()), null);        
-        featureInstaller.addMainMenuItemWithJava14Fix(generateLogPlugIn, new String[] {MenuNames.WINDOW},
-                generateLogPlugIn.getName() + "...", false, null, null);        
+        featureInstaller.addMainMenuItemWithJava14Fix(outputWindowPlugIn,
+                new String[] {MenuNames.WINDOW},
+                outputWindowPlugIn.getName(), false,
+                GUIUtil.toSmallIcon(outputWindowPlugIn.getIcon()), null);        
+        featureInstaller.addMainMenuItemWithJava14Fix(generateLogPlugIn,
+                new String[] {MenuNames.WINDOW},
+                generateLogPlugIn.getName(), false,
+                GUIUtil.toSmallIcon(generateLogPlugIn.getIcon()), null);
         featureInstaller.addMenuSeparator(MenuNames.WINDOW); // ===================
         
         featureInstaller.addMainMenuItemWithJava14Fix(cloneWindowPlugIn, new String[] {MenuNames.WINDOW},
@@ -852,9 +887,9 @@ public class JUMPConfiguration implements Setup {
         configToolsAttributes(workbenchContext, checkFactory, featureInstaller);  
 		*/
         featureInstaller.addMainMenuItemWithJava14Fix(shortcutKeysPlugIn, new String[]{MenuNames.HELP},
-                shortcutKeysPlugIn.getName() + "...", false, null, null);
+                shortcutKeysPlugIn.getName() + "...", false, ShortcutKeysPlugIn.ICON, null);
         new FeatureInstaller(workbenchContext).addMainMenuItemWithJava14Fix(
-                new AboutPlugIn(), new String[]{MenuNames.HELP}, I18N.get("JUMPConfiguration.about"), false, null, null);
+                new AboutPlugIn(), new String[]{MenuNames.HELP}, I18N.get("JUMPConfiguration.about"), false, AboutPlugIn.ICON, null);
     
         //-- CUSTOMIZE
         //-- [sstein: 24.03.2007 new menu]
@@ -869,10 +904,10 @@ public class JUMPConfiguration implements Setup {
     //================================
     //public static String MENU_LAYER = MenuNames.LAYER;
 
-        private AddDatastoreLayerPlugIn addDatastoreLayerPlugIn = new AddDatastoreLayerPlugIn();
-        private RunDatastoreQueryPlugIn runDatastoreQueryPlugIn = new RunDatastoreQueryPlugIn();
-        private InstallDatastoreLayerRendererHintsPlugIn installDatastoreLayerRendererHintsPlugIn = new InstallDatastoreLayerRendererHintsPlugIn();
-        private AddImageLayerPlugIn addImageLayerPlugIn = new AddImageLayerPlugIn();
+    private AddDatastoreLayerPlugIn addDatastoreLayerPlugIn = new AddDatastoreLayerPlugIn();
+    //private RunDatastoreQueryPlugIn runDatastoreQueryPlugIn = new RunDatastoreQueryPlugIn();
+    private InstallDatastoreLayerRendererHintsPlugIn installDatastoreLayerRendererHintsPlugIn = new InstallDatastoreLayerRendererHintsPlugIn();
+    //private AddImageLayerPlugIn addImageLayerPlugIn = new AddImageLayerPlugIn();
         
     private void configLayer(final WorkbenchContext workbenchContext,
                 final EnableCheckFactory checkFactory,
@@ -885,23 +920,25 @@ public class JUMPConfiguration implements Setup {
                addNewLayerPlugIn.getName());
        featureInstaller.addLayerViewMenuItem(addDatastoreLayerPlugIn, MENU_LAYER,
               addDatastoreLayerPlugIn.getName() + "...");
-       */
+       
        featureInstaller.addLayerViewMenuItem(runDatastoreQueryPlugIn, MENU_LAYER,
               runDatastoreQueryPlugIn.getName() + "...");
+       */
        //--[sstein 21Mar2008] -- disabled because of new menu structure by Paul
        /*
         featureInstaller.addLayerViewMenuItem(addWMSQueryPlugIn, MENU_LAYER,
                 addWMSQueryPlugIn.getName() + "...");
-      	*/
+      	
         featureInstaller.addLayerViewMenuItem(addImageLayerPlugIn, MENU_LAYER,
                 addImageLayerPlugIn.getName() + "...");
+        */
         /*
         featureInstaller.addMainMenuItem(addNewCategoryPlugIn, MENU_LAYER,
                 addNewCategoryPlugIn.getName(), null, addNewCategoryPlugIn
                         .createEnableCheck(workbenchContext));
 		*/
         
-        featureInstaller.addMenuSeparator(MENU_LAYER); // ===================
+        //featureInstaller.addMenuSeparator(MENU_LAYER); // ===================
         featureInstaller.addMainMenuItem(cutSelectedLayersPlugIn, MENU_LAYER,
                 cutSelectedLayersPlugIn.getNameWithMnemonic(), cutSelectedLayersPlugIn.ICON,
                 cutSelectedLayersPlugIn.createEnableCheck(workbenchContext));
@@ -1307,7 +1344,11 @@ public void configureDatastores(final WorkbenchContext context) throws Exception
         frame.getToolBar().addSeparator();
         configureEditingButton(workbenchContext);
         frame.getToolBar().addSeparator();
-        add(new MeasureTool(), workbenchContext);
+//        add(new MeasureTool(), workbenchContext);
+		AdvancedMeasureTool advancedMeasureTool = new AdvancedMeasureTool(workbenchContext);
+		workbenchContext.getWorkbench().getFrame().getToolBar().addCursorTool(advancedMeasureTool, advancedMeasureTool.getToolbarButton());
+		OptionsDialog.instance(workbenchContext.getWorkbench()).addTab(I18N.get("org.openjump.core.ui.plugin.tools.AdvancedMeasurePlugin.OptionPanelTitle"), new AdvancedMeasureOptionsPanel(workbenchContext));
+
         frame.getToolBar().addSeparator();
         frame.getToolBar().addPlugIn(undoPlugIn.getIcon(), undoPlugIn,
                 undoPlugIn.createEnableCheck(workbenchContext),

@@ -12,9 +12,10 @@ import com.vividsolutions.jump.workbench.plugin.PlugInContext;
 import com.vividsolutions.jump.workbench.plugin.ThreadedBasePlugIn;
 import com.vividsolutions.jump.workbench.ui.GUIUtil;
 import com.vividsolutions.jump.workbench.ui.OKCancelDialog;
+import org.openjump.core.ui.plugin.AbstractThreadedUiPlugIn;
 
 public abstract class AbstractAddDatastoreLayerPlugIn extends
-        ThreadedBasePlugIn {
+        AbstractThreadedUiPlugIn {
 
     public boolean execute(final PlugInContext context) throws Exception {
         // The user may have added connections using the Connection Manager
@@ -49,7 +50,7 @@ public abstract class AbstractAddDatastoreLayerPlugIn extends
     protected abstract Layerable createLayerable(ConnectionPanel panel,
             TaskMonitor monitor, PlugInContext context) throws Exception;
 
-    private OKCancelDialog getDialog(PlugInContext context) {
+    protected OKCancelDialog getDialog(PlugInContext context) {
         if (dialog == null) {
             // Cache the dialog between invocations of this menu item,
             // to preserve the dialog's useful cache of dataset names.

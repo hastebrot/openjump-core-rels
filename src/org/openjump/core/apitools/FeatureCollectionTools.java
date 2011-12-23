@@ -2,10 +2,10 @@
  * Created on 12.01.2005
  *
  * SVN header information:
- *  $Author: mentaer $
- *  $Rev: 1956 $
- *  $Date: 2010-06-07 04:24:47 +0200 (Mo, 07. Jun 2010) $
- *  $Id: FeatureCollectionTools.java 1956 2010-06-07 02:24:47Z mentaer $s
+ *  $Author: michaudm $
+ *  $Rev: 2259 $
+ *  $Date: 2011-05-08 12:47:24 +0200 (So, 08. Mai 2011) $
+ *  $Id: FeatureCollectionTools.java 2259 2011-05-08 10:47:24Z michaudm $s
  */
 package org.openjump.core.apitools;
 
@@ -54,7 +54,7 @@ import de.fho.jump.pirol.utilities.debugOutput.PersonalLogger;
  * <br>Project: PIROL (2005),
  * <br>Subproject: Daten- und Wissensmanagement
  * 
- * @version $Rev: 1956 $
+ * @version $Rev: 2259 $
  * [sstein] - 22.Feb.2009 - modified to work in OpenJUMP
  */
 
@@ -1068,7 +1068,7 @@ public class FeatureCollectionTools extends ToolToMakeYourLifeEasier {
      * are ordered the same way as in the input list.
      * TODO: this method has been tested only briefly (not exhaustively)
      * @param features
-     * @param attributeNameForSorting, attribute needs to be either Integer or Double 
+     * @param attributeNameForSorting attribute needs to be either Integer or Double 
      * @return list of sorted features; the smallest value will be first in the list.
      */
     public static ArrayList<Feature> sortFeatureListByAttributeBeginWithSmallest(

@@ -3,9 +3,9 @@
  *
  * SVN header information:
  *  $Author: michaudm $
- *  $Rev: 1559 $
- *  $Date: 2008-10-06 00:54:14 +0200 (Mo, 06. Okt 2008) $
- *  $Id: AttributeInfo.java 1559 2008-10-05 22:54:14Z michaudm $
+ *  $Rev: 2259 $
+ *  $Date: 2011-05-08 12:47:24 +0200 (So, 08. Mai 2011) $
+ *  $Id: AttributeInfo.java 2259 2011-05-08 10:47:24Z michaudm $
  */
 package de.fho.jump.pirol.utilities.attributes;
 
@@ -23,9 +23,9 @@ import com.vividsolutions.jump.feature.FeatureSchema;
  * <br>Project: PIROL (2005),
  * <br>Subproject: Daten- und Wissensmanagement
  * 
- * @version $Rev: 1559 $
+ * @version $Rev: 2259 $
  * 
- * @see de.fho.jump.pirol.utilities.FeatureCollectionTools
+ * @see org.openjump.core.apitools.FeatureCollectionTools
  */
 public class AttributeInfo implements Comparable {
 

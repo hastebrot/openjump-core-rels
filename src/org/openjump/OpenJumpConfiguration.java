@@ -31,6 +31,7 @@ import org.openjump.core.ui.io.file.DataSourceFileLayerLoader;
 import org.openjump.core.ui.io.file.FileLayerLoader;
 import org.openjump.core.ui.io.file.ReferencedImageFactoryFileLayerLoader;
 import org.openjump.core.ui.plugin.datastore.AddDataStoreLayerWizard;
+import org.openjump.core.ui.plugin.datastore.RefreshDataStoreQueryPlugIn;
 import org.openjump.core.ui.plugin.edittoolbox.ConstrainedMoveVertexPlugIn;
 import org.openjump.core.ui.plugin.edittoolbox.DrawCircleWithGivenRadiusPlugIn;
 import org.openjump.core.ui.plugin.edittoolbox.DrawConstrainedArcPlugIn;
@@ -92,6 +93,8 @@ import com.vividsolutions.jump.workbench.ui.LayerViewPanel;
 import com.vividsolutions.jump.workbench.ui.MenuNames;
 import com.vividsolutions.jump.workbench.ui.WorkbenchFrame;
 import com.vividsolutions.jump.workbench.ui.plugin.PersistentBlackboardPlugIn;
+import com.vividsolutions.jump.workbench.ui.plugin.datastore.RunDatastoreQueryPlugIn;
+import com.vividsolutions.jump.workbench.ui.plugin.imagery.AddImageLayerPlugIn;
 import com.vividsolutions.jump.workbench.ui.renderer.RenderingManager;
 
 import de.latlon.deejump.plugin.SaveLegendPlugIn;
@@ -139,6 +142,12 @@ public class OpenJumpConfiguration {
 
     OpenFilePlugIn openFile = new OpenFilePlugIn();
     openFile.initialize(pluginContext);
+    
+    RunDatastoreQueryPlugIn runDatastoreQueryPlugIn = new RunDatastoreQueryPlugIn();
+    runDatastoreQueryPlugIn.initialize(pluginContext);
+
+    AddImageLayerPlugIn addImageLayerPlugIn = new AddImageLayerPlugIn();
+    addImageLayerPlugIn.initialize(pluginContext);
 
     OpenProjectPlugIn openProject = new OpenProjectPlugIn();
     openProject.initialize(pluginContext);
@@ -217,15 +226,14 @@ public class OpenJumpConfiguration {
     myMapTipPlugIn.initialize(new PlugInContext(workbenchContext, null, null,
       null, null));
 
-    pluginContext.getFeatureInstaller().addMenuSeparator(LAYER);
 
     // -- deeJUMP function by LAT/LON [01.08.2006 sstein]
-    LayerStyle2SLDPlugIn mySytle2SLDplugIn = new LayerStyle2SLDPlugIn();
-    mySytle2SLDplugIn.initialize(new PlugInContext(workbenchContext, null,
-      null, null, null));
+    //LayerStyle2SLDPlugIn mySytle2SLDplugIn = new LayerStyle2SLDPlugIn();
+    //mySytle2SLDplugIn.initialize(new PlugInContext(workbenchContext, null,
+    //  null, null, null));
     
-    new ImportSLDPlugIn().initialize(pluginContext);
-    new ImportArcMapStylePlugIn().initialize(pluginContext);
+    //new ImportSLDPlugIn().initialize(pluginContext);
+    //new ImportArcMapStylePlugIn().initialize(pluginContext);
     
     pluginContext.getFeatureInstaller().addMenuSeparator(LAYER);
 
@@ -420,9 +428,22 @@ public class OpenJumpConfiguration {
     myLayerPropertiesPlugIn.initialize(new PlugInContext(workbenchContext,
       null, null, null, null));	
     
-    ChangeLayerableNamePlugIn changeLayerableNamePlugIn = new ChangeLayerableNamePlugIn();
-    changeLayerableNamePlugIn.initialize(new PlugInContext(workbenchContext,
+    //ChangeLayerableNamePlugIn changeLayerableNamePlugIn = new ChangeLayerableNamePlugIn();
+    //changeLayerableNamePlugIn.initialize(new PlugInContext(workbenchContext,
+    //  null, null, null, null));
+    
+    RefreshDataStoreQueryPlugIn refreshDataStoreQueryPlugIn = new RefreshDataStoreQueryPlugIn();
+    refreshDataStoreQueryPlugIn.initialize(new PlugInContext(workbenchContext,
       null, null, null, null));
+    
+    // -- deeJUMP function by LAT/LON [01.08.2006 sstein]
+    new LayerStyle2SLDPlugIn().initialize(pluginContext);
+    new ImportSLDPlugIn().initialize(pluginContext);
+    new ImportArcMapStylePlugIn().initialize(pluginContext);
+    
+    //featureInstaller.addPopupMenuItem(layerNamePopupMenu, refreshDataStoreQueryPlugin,
+    //        new String[]{MenuNames.DATASTORE}, refreshDataStoreQueryPlugin.getName() + "...", false, RefreshDataStoreQueryPlugin.ICON,
+    //            RefreshDataStoreQueryPlugin.createEnableCheck(workbenchContext));
     
     //-- [sstein 22.Feb.2009]
     //-- adds renderer for (Pirol/Sextante) raster images

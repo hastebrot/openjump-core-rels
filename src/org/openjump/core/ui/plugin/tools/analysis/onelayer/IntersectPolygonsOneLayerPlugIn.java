@@ -37,16 +37,15 @@ import com.vividsolutions.jump.workbench.ui.MultiInputDialog;
 
 /**
  * @author sstein
- * @url www.openjump.org
- * @curentdate 27 May 2010
- * @license GPL2
+ * 
+ * url www.openjump.org
+ * curentdate 27 May 2010
+ * license GPL2
  * 
  * Intersects polygons in one layer. It therefore calculates
  * all geometric intersections between the polygons. Afterwards the attributes
  * are transferred. The later step assumes that a new created intersection
  * polygon has at max only one correspondent polygon per layer.
- * 
- * 
  */
 
 public class IntersectPolygonsOneLayerPlugIn extends ThreadedBasePlugIn {
@@ -63,7 +62,7 @@ public class IntersectPolygonsOneLayerPlugIn extends ThreadedBasePlugIn {
 	public void initialize(PlugInContext context) throws Exception {
 		context.getFeatureInstaller().addMainMenuItem(
 				this,
-				new String[] { MenuNames.TOOLS, MenuNames.TOOLS_ANALYSIS, MenuNames.ONELAYER },
+				new String[] { MenuNames.TOOLS, MenuNames.TOOLS_ANALYSIS},
 				this.getName() + "...",
 				false,
 				null,
@@ -71,7 +70,7 @@ public class IntersectPolygonsOneLayerPlugIn extends ThreadedBasePlugIn {
 						new EnableCheckFactory(context.getWorkbenchContext())
 								.createTaskWindowMustBeActiveCheck()).add(
 						new EnableCheckFactory(context.getWorkbenchContext())
-								.createAtLeastNLayersMustExistCheck(2)));
+								.createAtLeastNLayersMustExistCheck(1)));
 		// -- reset in execute to correct language
 		this.sDescription = I18N.get("org.openjump.plugin.tools.analysis.onelayer.IntersectPolygonsOneLayerPlugIn.sDescription");
 	}
@@ -248,7 +247,7 @@ public class IntersectPolygonsOneLayerPlugIn extends ThreadedBasePlugIn {
 	/**
 	 * All values are set to NaN.
 	 * @param f
-	 * @return
+	 * @return a clone of f where all numeric and string attributes are set to NaN
 	 */
 	public static Feature resetFeatureValuesToNaN(Feature f){
 		//-- work only on a copy so the original feature isn't changed

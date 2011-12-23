@@ -1,4 +1,3 @@
-
 /*
  * The Unified Mapping Platform (JUMP) is an extensible, interactive GUI 
  * for visualizing and manipulating spatial features with geometry and attributes.
@@ -46,13 +45,11 @@ import com.vividsolutions.jump.workbench.ui.Viewport;
  * Must have a parameterless constructor so it can be created by Java2XML.
  */
 public interface Style extends Cloneable {
-    public void paint(Feature f, Graphics2D g, Viewport viewport)
-        throws Exception;
+    
+    public void paint(Feature f, Graphics2D g, Viewport viewport) throws Exception;
 
     /**
      * Called before #paint is applied to each Feature.
-     * @return false if #paint should not be called e.g. because vertices are not
-     * shown. Don't need to check whether the layer is visible.
      */
     public void initialize(Layer layer);
 
@@ -60,6 +57,10 @@ public interface Style extends Cloneable {
 
     public void setEnabled(boolean enabled);
 
+    /**
+     * @return false if #paint should not be called e.g. because vertices are not
+     * shown. Don't need to check whether the layer is visible.
+     */
     public boolean isEnabled();
 
 }

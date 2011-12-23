@@ -72,9 +72,9 @@ import com.vividsolutions.jump.workbench.ui.style.StylePanel;
  * <code>DeeChangeStylesPlugIn</code>
  * 
  * @author <a href="mailto:schmitz@lat-lon.de">Andreas Schmitz</a>
- * @author last edited by: $Author: mentaer $
+ * @author last edited by: $Author: michaudm $
  * 
- * @version $Revision: 1884 $, $Date: 2008-02-14 14:37:00 +0100 (Thu, 14 Feb
+ * @version $Revision: 2239 $, $Date: 2008-02-14 14:37:00 +0100 (Thu, 14 Feb
  *          2008) $
  */
 public class DeeChangeStylesPlugIn extends AbstractPlugIn {
@@ -148,6 +148,8 @@ public class DeeChangeStylesPlugIn extends AbstractPlugIn {
         String selectedTab = (String) blackboard.get(LAST_TAB_KEY, (stylePanels.iterator().next()).getTitle());
 
         tabbedPane.setSelectedComponent(find(stylePanels, selectedTab));
+        dialog.pack();
+        GUIUtil.centreOnWindow(dialog);
         dialog.setVisible(true);
         blackboard.put(LAST_TAB_KEY, ((StylePanel) tabbedPane.getSelectedComponent()).getTitle());
 

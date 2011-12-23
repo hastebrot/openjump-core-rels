@@ -4,7 +4,7 @@
   <groupId>org.openjump</groupId>
   <artifactId>openjump-core</artifactId>
   <name>Open JUMP libraries</name>
-  <version>1.4.1-SNAPSHOT</version>
+  <version>1.4.2-SNAPSHOT</version>
   <url>http://www.revolsys.com</url>
   <build>
     <sourceDirectory>src/</sourceDirectory>
@@ -12,18 +12,9 @@
     <resources>
       <resource>
         <directory>src</directory>
-        <includes>
-          <include>**/*.txt</include>
-          <include>**/*.png</include>
-          <include>**/*.gif</include>
-          <include>**/*.jpg</include>
-          <include>**/*.JPG</include>          
-          <include>**/*.java2xml</include>
-          <include>**/*.html</include>
-          <include>**/*.xml</include>
-          <include>**/*.xsl</include>
-          <include>**/*.properties</include>
-        </includes>
+        <!--excludes>
+          <exclude> **/*.java </exclude>
+        </excludes-->
       </resource>
     </resources>
     <plugins>
@@ -78,7 +69,7 @@
             <configuration>
               <artifacts>
                 <artifact>
-                  <file>target/openjump-core-1.4.1-SNAPSHOT-bin.zip</file>
+                  <file>target/openjump-core-1.4.2-SNAPSHOT-bin.zip</file>
                   <type>zip</type>
                   <classifier>bin</classifier>
                 </artifact>
@@ -124,7 +115,7 @@
     <dependency>
       <groupId>com.vividsolutions</groupId>
       <artifactId>jts</artifactId>
-      <version>1.11</version>
+      <version>1.12</version>
       <scope>compile</scope>
     </dependency>
     <dependency>

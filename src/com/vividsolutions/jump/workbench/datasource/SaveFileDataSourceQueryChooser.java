@@ -33,11 +33,13 @@ package com.vividsolutions.jump.workbench.datasource;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.regex.Pattern;
 
 import javax.swing.JFileChooser;
 import javax.swing.event.AncestorEvent;
 import javax.swing.event.AncestorListener;
 
+import com.vividsolutions.jump.I18N;
 import com.vividsolutions.jump.io.datasource.DataSource;
 import com.vividsolutions.jump.util.Blackboard;
 import com.vividsolutions.jump.workbench.WorkbenchContext;
@@ -55,6 +57,20 @@ public class SaveFileDataSourceQueryChooser extends FileDataSourceQueryChooser {
         " - FILE CHOOSER DIRECTORY";
     public static final String FILE_CHOOSER_PANEL_KEY = SaveFileDataSourceQueryChooser.class.getName() +
             " - SAVE FILE CHOOSER PANEL";
+
+    private static final Pattern fileNameRegex = Pattern.compile(
+        // Start of the path
+        "^" +
+        // Protocole (ex. file:) or machine name (\\machine) or parent directory (..) or current directory (.)
+        "([a-zA-Z]:|\\\\\\\\[^/\\\\\\?%\\*:\\|\"<>]+|\\.\\.|\\.)?" +
+        // directory names (/directory or \directory) name does not include /\?%*:|"<>
+        "([/\\\\]([^/\\\\\\?%\\*:\\|\"<>]+|\\.\\.|\\.))*" +
+        // file name (does not include /\?%*:|"<>)
+        "([^/\\\\\\?%\\*:\\|\"<>\\.]+)" +
+        // file name extension
+        "(\\.[^/\\\\\\?%\\*:\\|\"<>\\.]+)?" +
+        "$");
+
     private WorkbenchContext context;
 
     /**
@@ -110,5 +126,17 @@ public class SaveFileDataSourceQueryChooser extends FileDataSourceQueryChooser {
             getFileChooserPanel().getChooser().getCurrentDirectory().toString());
 
         return super.getDataSourceQueries();
+    }
+    
+    public boolean isInputValid() {
+        boolean isInputValid = super.isInputValid();
+        if (!fileNameRegex.matcher(getFileChooserPanel().getChooser().getSelectedFile().getPath()).matches()) {
+            context.getWorkbench()
+                   .getFrame()
+                   .warnUser(I18N.get("com.vividsolutions.jump.workbench.datasource.SaveFileDataSourceQueryChooser.Invalid-file-name"));
+            isInputValid = false;
+        }
+        else context.getWorkbench().getFrame().setStatusMessage("");
+        return isInputValid;
     }
 }
