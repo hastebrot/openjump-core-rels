@@ -5,12 +5,14 @@
 	<plug-in>org.openjump.core.ui.plugin.file.SaveImageAsSVGPlugIn</plug-in>
 	<!---  ======================================== /-->
 	<!--  			menu EDIT 						/-->
-	<!--- ========================================= /-->	
+	<!--- ========================================= /-->
 	<plug-in>org.openjump.core.ui.plugin.edit.SelectItemsByFenceFromSelectedLayersPlugIn</plug-in>
 	<plug-in>org.openjump.core.ui.plugin.edit.SelectItemsByCircleFromSelectedLayersPlugIn</plug-in>
 	<plug-in>org.openjump.core.ui.plugin.edit.SelectAllLayerItemsPlugIn</plug-in>
+	<plug-in>org.openjump.core.ui.plugin.edit.SelectAllModifiedFeaturesPlugIn</plug-in>
 	<plug-in>org.openjump.core.ui.plugin.edit.SelectByTypePlugIn</plug-in>
 	<plug-in>org.openjump.core.ui.plugin.edit.SelectLayersWithSelectedItemsPlugIn</plug-in>
+	<plug-in>org.openjump.core.ui.plugin.edit.InvertSelectionPlugIn</plug-in>
 	<plug-in>org.openjump.core.ui.plugin.edit.ReplicateSelectedItemsPlugIn</plug-in>
 	<plug-in>org.openjump.core.ui.plugin.layer.ExtractLayersByGeometry</plug-in>
 	<plug-in>org.openjump.core.ui.plugin.layer.ExtractLayerInFence</plug-in>
@@ -44,7 +46,15 @@
 	<plug-in>org.openjump.core.ui.plugin.tools.JoinAttributesSpatiallyPlugIn</plug-in>
 	<plug-in>org.openjump.core.ui.plugin.tools.IntersectPolygonLayersPlugIn</plug-in>
 	<plug-in>org.openjump.core.ui.plugin.tools.UnionByAttributePlugIn</plug-in>
+	<plug-in>org.openjump.core.ui.plugin.tools.analysis.onelayer.IntersectPolygonsOneLayerPlugIn</plug-in>	
+	<plug-in>org.openjump.core.ui.plugin.tools.analysis.onelayer.MergeSelectedPolygonsWithNeighbourPlugIn</plug-in>
+	<!--- =========  Statistics ====================  /-->
 	<plug-in>org.openjump.core.ui.plugin.tools.statistics.StatisticOverViewPlugIn</plug-in>
+	<plug-in>org.openjump.core.ui.plugin.tools.statistics.CreateScatterPlotPlugIn</plug-in>
+	<plug-in>org.openjump.core.ui.plugin.tools.statistics.CreateBarPlotPlugIn</plug-in>
+	<plug-in>org.openjump.core.ui.plugin.tools.statistics.CreateHistogramPlugIn</plug-in>
+	<plug-in>org.openjump.core.ui.plugin.tools.statistics.ClassifyAttributesPlugIn</plug-in>
+	<plug-in>org.openjump.core.ui.plugin.tools.statistics.CalcVarianceAndMeanPerClassPlugIn</plug-in>
 	<!--- =========  Generate ====================  /-->
 	<plug-in>com.vividsolutions.jump.workbench.ui.plugin.analysis.BufferPlugIn</plug-in>
 	<plug-in>com.vividsolutions.jump.workbench.ui.plugin.analysis.ConvexHullPlugIn</plug-in>
@@ -90,6 +100,13 @@
 	<plug-in>org.openjump.core.ui.plugin.tools.generalization.SimplifyPolygonCoveragePlugIn</plug-in>	
 	<!--- =========  other ====================  /-->
 	<plug-in>org.openjump.core.ui.plugin.tools.MeasureM_FPlugIn</plug-in>
+	<!---  ======================================== /-->
+	<!--  		 	RASTER 					        /-->
+	<!--- ========================================= /-->
+	<plug-in> org.openjump.core.ui.plugin.raster.CreateLatticeFromSelectedImageLayerPlugIn</plug-in>
+ 	<plug-in> org.openjump.core.ui.plugin.raster.CreatePolygonGridFromSelectedImageLayerPlugIn</plug-in>
+ 	<plug-in> org.openjump.core.ui.plugin.raster.ProfileGraphPlugIn</plug-in>
+ 	<plug-in> org.openjump.core.ui.plugin.raster.color.RasterColorEditorPlugIn</plug-in>
 	<!---  ======================================== /-->
 	<!--  			CUSTOMIZE 						/-->
 	<!--- ========================================= /-->

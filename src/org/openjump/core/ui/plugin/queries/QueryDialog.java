@@ -14,6 +14,7 @@ import javax.swing.BorderFactory;
 import javax.swing.border.Border;
 import javax.swing.JDialog;
 import javax.swing.WindowConstants;
+import java.text.SimpleDateFormat;
 
 import buoy.event.*;
 import buoy.widget.*;
@@ -46,12 +47,15 @@ import com.vividsolutions.jump.I18N;
  * version 0.1.1 (15 Jan 2005)
  * version 0.2 (16 Oct 2005)
  * version 0.2.1 (10 aug 2007)
+ * version 0.3.0 (04 sept 2010) complete rewrite of functionChenged and operatorChanged methods
  */ 
 public class QueryDialog extends BDialog {
     
     public static final int ALL_LAYERS = 0;
     public static final int SELECTION = 1;
     public static final int SELECTED_LAYERS = 2;
+    
+    public static final SimpleDateFormat DATE_FORMATTER = new SimpleDateFormat();
     
     private PlugInContext context;
     
@@ -250,7 +254,7 @@ public class QueryDialog extends BDialog {
                 FormContainer progressBarPanel = new FormContainer(5,1);
                 
                 // SOUTH PANEL (OK/CANCEL BUTTONS)
-            FormContainer southPanel = new FormContainer(8,1);
+            FormContainer southPanel = new FormContainer(7,1);
         
         // SET THE MANAGER BUTTONS
         BButton openButton = new BButton(I18N.get("org.openjump.core.ui.plugin.queries.SimpleQuery.open"));
@@ -342,8 +346,8 @@ public class QueryDialog extends BDialog {
         // SET THE OK/CANCEL BUTTONS
         okButton = new BButton(I18N.get("org.openjump.core.ui.plugin.queries.SimpleQuery.ok"));
             okButton.addEventLink(CommandEvent.class, this, "ok");
-        cancelButton = new BButton(I18N.get("org.openjump.core.ui.plugin.queries.SimpleQuery.cancel"));
-            cancelButton.addEventLink(CommandEvent.class, this, "cancel");
+        //cancelButton = new BButton(I18N.get("org.openjump.core.ui.plugin.queries.SimpleQuery.cancel"));
+        //    cancelButton.addEventLink(CommandEvent.class, this, "cancel");
         stopButton = new BButton(I18N.get("org.openjump.core.ui.plugin.queries.SimpleQuery.stop"));
             stopButton.addEventLink(CommandEvent.class, this, "stop");
         refreshButton = new BButton(I18N.get("org.openjump.core.ui.plugin.queries.SimpleQuery.refresh"));
@@ -351,8 +355,8 @@ public class QueryDialog extends BDialog {
         
         southPanel.add(okButton, 2, 0);
         southPanel.add(refreshButton, 3, 0);
-        southPanel.add(cancelButton, 4, 0);
-        southPanel.add(stopButton, 5, 0);
+        //southPanel.add(cancelButton, 4, 0);
+        southPanel.add(stopButton, 4, 0);
         
         dialogContainer.add(northPanel, dialogContainer.NORTH);
         dialogContainer.add(centerPanel, dialogContainer.CENTER);
@@ -386,6 +390,7 @@ public class QueryDialog extends BDialog {
         progressBar.setIndeterminate(false);
         progressBar.setValue(0);
         progressBar.setProgressText("");
+        refreshButton.setEnabled(true);
     }
     
     void initComboBoxes() {
@@ -455,7 +460,7 @@ public class QueryDialog extends BDialog {
         else if (type==AttributeType.STRING && charFilter.getState()) return true;
         else if (type==AttributeType.INTEGER && numFilter.getState()) return true;
         else if (type==AttributeType.DOUBLE && numFilter.getState()) return true;
-        else if (type==AttributeType.DATE) return true;
+        else if (type==AttributeType.DATE && numFilter.getState()) return true;
         /* Special MM attributes, to add if mmpatch is added to the core
         else if (mmpatch && type==AttributeType.LONG && numFilter.getState()) return true;
         else if (mmpatch && type==AttributeType.BOOLEAN && numFilter.getState()) return true;
@@ -518,6 +523,7 @@ public class QueryDialog extends BDialog {
         char newat = 'S';
         //if (mmpatch && attType.equals("BOOLEAN")) newat = 'B';
         if (attType.equals("INTEGER")) newat = 'N';
+        else if (attType.equals("DATE")) newat = 'D';
         //else if (mmpatch && attType.equals("LONG")) newat = 'N';
         else if (attType.equals("DOUBLE")) newat = 'N';
         //else if (mmpatch && attType.equals("DECIMAL")) newat = 'N';
@@ -527,7 +533,9 @@ public class QueryDialog extends BDialog {
         else if (attType.equals("GEOMETRY")) newat = 'G';
         else;
         // No type change
-        if (newat==attributeType) {if (newat=='E' || newat=='S') updateValues();}
+        if (newat==attributeType) {
+            if (newat=='S') updateValues();
+        }
         else {
             attributeType = newat;
             updateFunctions();
@@ -544,6 +552,9 @@ public class QueryDialog extends BDialog {
             case 'N' :
                 functionCB.setContents(Function.NUMERIC_FUNCTIONS);
                 break;
+            case 'D' :
+                functionCB.setContents(Function.DATE_FUNCTIONS);
+                break;
             case 'S' :
                 functionCB.setContents(Function.STRING_FUNCTIONS);
                 break;
@@ -558,35 +569,50 @@ public class QueryDialog extends BDialog {
     }
     
     public void functionChanged() {
+        // if function is edited to change the parameter value by hand (buffer),
+        // functionCB.getSelectedValue() class changes from Function to String
         String ft = functionCB.getSelectedValue().toString();
         try {
-            // added on 11/01/2005
-            if (((Function)functionCB.getSelectedValue()).type!=function.type) {
-                updateOperators();
-                operatorChanged();
-                updateValues();
+            if (functionCB.getSelectedValue() instanceof Function) {
+                Function newfunction = (Function)functionCB.getSelectedValue();
+                if (newfunction.type!=function.type) {
+                    updateOperators();
+                    operatorChanged();
+                    updateValues();
+                }
+                function = (Function)functionCB.getSelectedValue();
+                if (function == Function.SUBS || function == Function.BUFF) {
+                    functionCB.setEditable(true);
+                }
+                else functionCB.setEditable(false);
             }
-            function = (Function)functionCB.getSelectedValue();
-        } catch(Exception e) {}
-        // SET IF FUNCTION IS EDITABLE OR NOT
-        if(function==Function.SUBS) {
-            functionCB.setEditable(true);
-            String f = functionCB.getSelectedValue().toString();
-            String sub = f.substring(f.lastIndexOf('(')+1, f.lastIndexOf(')'));
-            String[] ss = sub.split(",");
-            Function.SUBS.args = new int[ss.length];
-            if (ss.length>0) Function.SUBS.args[0] = Integer.parseInt(ss[0]);
-            if (ss.length>1) Function.SUBS.args[1] = Integer.parseInt(ss[1]);
-            functionCB.setSelectedValue(Function.SUBS);
+            else if (functionCB.getSelectedValue() instanceof String) {
+                // SET IF FUNCTION IS EDITABLE OR NOT
+                if(function==Function.SUBS) {
+                    //functionCB.setEditable(true);
+                    String f = functionCB.getSelectedValue().toString();
+                    String sub = f.substring(f.lastIndexOf('(')+1, f.lastIndexOf(')'));
+                    String[] ss = sub.split(",");
+                    Function.SUBS.args = new int[ss.length];
+                    if (ss.length>0) Function.SUBS.args[0] = Integer.parseInt(ss[0]);
+                    if (ss.length>1) Function.SUBS.args[1] = Integer.parseInt(ss[1]);
+                    functionCB.setSelectedValue(Function.SUBS);
+                }
+                else if(function==Function.BUFF) {
+                    //functionCB.setEditable(true);
+                    String f = functionCB.getSelectedValue().toString();
+                    String sub = f.substring(f.lastIndexOf('(')+1, f.lastIndexOf(')'));
+                    Function.BUFF.arg = Double.parseDouble(sub);
+                    functionCB.setSelectedValue(Function.BUFF);
+                }
+                else {
+                    functionCB.setEditable(false);
+                    context.getWorkbenchFrame().warnUser("Cannot modify this function name");
+                }
+            }
+        } catch(Exception e) {
+            context.getWorkbenchFrame().toMessage(e);
         }
-        else if(function==Function.BUFF) {
-            functionCB.setEditable(true);
-            String f = functionCB.getSelectedValue().toString();
-            String sub = f.substring(f.lastIndexOf('(')+1, f.lastIndexOf(')'));
-            Function.BUFF.arg = Double.parseDouble(sub);
-            functionCB.setSelectedValue(Function.BUFF);
-        }
-        else {functionCB.setEditable(false);}
     }
     
     private void updateOperators() {
@@ -600,6 +626,7 @@ public class QueryDialog extends BDialog {
                 operatorCB.setContents(Operator.BOOLEAN_OP);
                 break;
             case 'N' :
+            case 'D' :
                 operatorCB.setContents(Operator.NUMERIC_OP);
                 break;
             case 'G' :
@@ -610,29 +637,55 @@ public class QueryDialog extends BDialog {
     }
     
     public void operatorChanged() {
-        String op = operatorCB.getSelectedValue().toString();
+        //Operator newop = (Operator)operatorCB.getSelectedValue();
+        String newopstring = operatorCB.getSelectedValue().toString();
         try {
-            if(((Operator)operatorCB.getSelectedValue()).type!=operator.type) {
-                updateValues();
+            if (operatorCB.getSelectedValue() instanceof Operator) {
+                Operator newop = (Operator)operatorCB.getSelectedValue();
+                if(newop.type!=operator.type) {
+                    updateValues();
+                }
+                if (operator!=Operator.MATC && operator!=Operator.FIND &&
+                    (newop==Operator.MATC || newop==Operator.FIND)) {
+                    updateValues();
+                }
+                if ((operator==Operator.MATC || operator==Operator.FIND) &&
+                    (newop!=Operator.MATC && newop!=Operator.FIND)) {
+                    updateValues();
+                }
+                operator = newop;
+                if (operator == Operator.WDIST) {
+                    operatorCB.setEditable(true);
+                }
+                else {
+                    operatorCB.setEditable(false);
+                }
             }
-            operator = (Operator)operatorCB.getSelectedValue();
+            else if (operatorCB.getSelectedValue() instanceof String) {
+                if (operator==Operator.WDIST) {
+                    //operatorCB.setEditable(true); // added on 2007-07-02 (bug fix)
+                    String f = operatorCB.getSelectedValue().toString();
+                    String sub = f.substring(f.lastIndexOf('(')+1, f.lastIndexOf(')'));
+                    Operator.WDIST.arg = Double.parseDouble(sub);
+                    operatorCB.setSelectedValue(Operator.WDIST);
+                }
+                else {
+                    operatorCB.setEditable(false);
+                    context.getWorkbenchFrame().warnUser("Cannot modify this function name");
+                }
+            }
         }
-        catch(Exception e) {System.out.println(e);}
-        if (operator==Operator.WDIST) {
-            operatorCB.setEditable(true); // added on 2007-07-02 (bug fix)
-            String f = operatorCB.getSelectedValue().toString();
-            String sub = f.substring(f.lastIndexOf('(')+1, f.lastIndexOf(')'));
-            Operator.WDIST.arg = Double.parseDouble(sub);
-            operatorCB.setSelectedValue(Operator.WDIST);
+        catch(Exception e) {
+            context.getWorkbenchFrame().toMessage(e);
         }
+        
     }
     
    /**
     * Update the possible values list (may be editable or not)
     */
     private void updateValues() {
-        if(function==Function.EMPT || function==Function.SIMP ||
-           function==Function.VALI || function==Function.BNOF) {
+        if(function.type == 'B') {
                valueCB.setContents(new String[]{
             		   I18N.get("org.openjump.core.ui.plugin.queries.SimpleQuery.true"),
             		   I18N.get("org.openjump.core.ui.plugin.queries.SimpleQuery.false")
@@ -651,6 +704,9 @@ public class QueryDialog extends BDialog {
                 valueCB.setContents(new Object[]{"0"});
             }
             valueCB.setEditable(true);
+        }
+        else if (attributeType=='D') {
+            valueCB.setContents(new Object[]{DATE_FORMATTER.format(new Date())});
         }
         else if (attributeType=='S') {
             valueCB.setContents(availableStrings(attribute, 12));
@@ -691,7 +747,9 @@ public class QueryDialog extends BDialog {
             if (!fc.getFeatureSchema().hasAttribute(attribute)) continue;
             Iterator it = fc.iterator();
             while (it.hasNext() && set.size()<maxsize) {
-                set.add(((Feature)it.next()).getAttribute(attribute));
+                Feature f = (Feature)it.next();
+                Object val = f.getAttribute(attribute);
+                if (val != null) set.add(val);
             }
         }
         return set;
@@ -830,6 +888,7 @@ public class QueryDialog extends BDialog {
                 // runningQuery is set to true while the query is running
                 runningQuery=true;
                 cancelQuery=false;
+                refreshButton.setEnabled(false);
                 
                 // New condition
                 Condition condition = new Condition(queryDialog, context);
@@ -870,8 +929,6 @@ public class QueryDialog extends BDialog {
                 if (operator.type=='G' && valueCB.getSelectedIndex() == SELECTION) {
                     selection = context.getLayerViewPanel().getSelectionManager().getSelectedItems();
                 }
-                
-                System.out.println(condition);
                 
                 // initialize the selection if the select option is true
                 if(select.getState()) {selectedFeatures.unselectItems();}
@@ -917,10 +974,14 @@ public class QueryDialog extends BDialog {
                     
                     // initialize a new list for the new selection
                     List okFeatures = new ArrayList();
+                    int mod = 1;
+                    if (total > 1000) mod = 10;
+                    if (total > 33000) mod = 100;
+                    if (total > 1000000) mod = 1000;
                     try {
                         for (Iterator it = features.iterator() ; it.hasNext() ; ) {
                             count++;
-                            if (count%10==0) {
+                            if (count%mod==0) {
                                 progressBar.setProgressText(""+count+"/"+total);
                                 progressBar.setValue(count);
                             }
@@ -928,14 +989,14 @@ public class QueryDialog extends BDialog {
                             if (condition.test(f)) {
                                 okFeatures.add(f);
                                 featuresfound++;
-                                if (cancelQuery) break;
-                                Thread.yield();
                             }
+                            Thread.yield();
+                            if (cancelQuery) break;
                         }
                         progressBar.setProgressText(""+count+"/"+total);
                         progressBar.setValue(count);
                     }
-                    catch(Exception e) {}
+                    catch(Exception e) {e.printStackTrace();}
                     if (cancelQuery) break;
                     
                     if (okFeatures.size()==0) continue;
@@ -1006,12 +1067,15 @@ public class QueryDialog extends BDialog {
     
     private void ok() {executeQuery();}
     
-    private void cancel() {setVisible(false);}
+    //private void cancel() {setVisible(false);}
     
     private void stop() {if (runningQuery) cancelQuery = true;}
     
     private void refresh() {initComboBoxes();}
     
-    private void exit() {setVisible(false);}
+    private void exit() {
+        if (runningQuery) cancelQuery = true;
+        setVisible(false);
+    }
     
 }

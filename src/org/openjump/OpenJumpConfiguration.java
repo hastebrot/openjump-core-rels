@@ -15,6 +15,7 @@
  */
 package org.openjump;
 
+import com.vividsolutions.jump.I18N;
 import static com.vividsolutions.jump.workbench.ui.MenuNames.LAYER;
 
 import java.util.Arrays;
@@ -57,6 +58,7 @@ import org.openjump.core.ui.plugin.mousemenu.category.MoveCategoryToTop;
 import org.openjump.core.ui.plugin.mousemenu.category.SetCategoryVisibilityPlugIn;
 import org.openjump.core.ui.plugin.style.ImportArcMapStylePlugIn;
 import org.openjump.core.ui.plugin.style.ImportSLDPlugIn;
+import org.openjump.core.ui.plugin.view.EasyButtonsPlugin;
 import org.openjump.core.ui.plugin.view.MapToolTipPlugIn;
 import org.openjump.core.ui.plugin.view.ShowFullPathPlugIn;
 import org.openjump.core.ui.plugin.view.ShowScalePlugIn;
@@ -94,6 +96,9 @@ import com.vividsolutions.jump.workbench.ui.renderer.RenderingManager;
 
 import de.latlon.deejump.plugin.SaveLegendPlugIn;
 import de.latlon.deejump.plugin.style.LayerStyle2SLDPlugIn;
+import java.nio.charset.Charset;
+import org.openjump.core.ui.DatasetOptionsPanel;
+import org.openjump.core.ui.swing.factory.field.ComboBoxFieldComponentFactory;
 
 /**
  * This class loads all OpenJUMP plugins. The method
@@ -119,6 +124,9 @@ public class OpenJumpConfiguration {
      **************************************************************************/
     FieldComponentFactoryRegistry.setFactory(workbenchContext, "FileString",
       new FileFieldComponentFactory(workbenchContext));
+	FieldComponentFactoryRegistry.setFactory(workbenchContext, "CharSetComboBoxField",
+      new ComboBoxFieldComponentFactory(workbenchContext, null, Charset.availableCharsets().keySet().toArray()));
+
 
     /***************************************************************************
      * menu FILE
@@ -189,6 +197,10 @@ public class OpenJumpConfiguration {
     /*
     new CopyBBoxPlugin().initialize(new PlugInContext(workbenchContext, null, null, null, null));
     */
+    EasyButtonsPlugin myEasyButtonsPlugIn = new EasyButtonsPlugin();
+    myEasyButtonsPlugIn.initialize(new PlugInContext(workbenchContext, null,
+    	      null, null, null));
+    
     ZoomToWMSPlugIn myZoomToWMSPlugIn = new ZoomToWMSPlugIn();
     myZoomToWMSPlugIn.initialize(new PlugInContext(workbenchContext, null,
       null, null, null));
@@ -595,6 +607,15 @@ public class OpenJumpConfiguration {
             StandardReaderWriterFileDataSource.GML.INPUT_TEMPLATE_FILE_KEY,
             "FileString", true);
         }
+		// for Shapefiles we check if we should show the charset selection
+		if (dataSourceClass == StandardReaderWriterFileDataSource.Shapefile.class) {
+			Object showCharsetSelection = PersistentBlackboardPlugIn.get(workbenchContext).get(DatasetOptionsPanel.BB_DATASET_OPTIONS_SHOW_CHARSET_SELECTION);
+			if (showCharsetSelection instanceof Boolean) {
+				if (((Boolean) showCharsetSelection).booleanValue()) {
+					fileLoader.addOption("charset", "CharSetComboBoxField", Charset.defaultCharset().displayName(), true);
+				}
+			}
+		}
         registry.createEntry(FileLayerLoader.KEY, fileLoader);
       }
     }

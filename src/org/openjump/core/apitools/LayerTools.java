@@ -3,9 +3,9 @@
  *
  * SVN header information:
  *  $Author: mentaer $
- *  $Rev: 1677 $
- *  $Date: 2009-03-01 05:50:48 +0100 (So, 01. Mrz 2009) $
- *  $Id: LayerTools.java 1677 2009-03-01 04:50:48Z mentaer $
+ *  $Rev: 1919 $
+ *  $Date: 2010-05-05 19:35:48 +0200 (Mi, 05. Mai 2010) $
+ *  $Id: LayerTools.java 1919 2010-05-05 17:35:48Z mentaer $
  */
 package org.openjump.core.apitools;
 
@@ -28,6 +28,7 @@ import com.vividsolutions.jump.feature.Feature;
 import com.vividsolutions.jump.feature.FeatureCollection;
 import com.vividsolutions.jump.feature.FeatureDataset;
 import com.vividsolutions.jump.feature.FeatureSchema;
+import com.vividsolutions.jump.workbench.WorkbenchContext;
 import com.vividsolutions.jump.workbench.model.Category;
 import com.vividsolutions.jump.workbench.model.Layer;
 import com.vividsolutions.jump.workbench.model.Layerable;
@@ -240,6 +241,22 @@ public class LayerTools extends ToolToMakeYourLifeEasier {
      * @return one selected Layer, null if no Layers are selected
      */
     public static Layerable getSelectedLayerable(PlugInContext context, Class layerableClass){
+        
+        Collection selLayers = context.getLayerNamePanel().selectedNodes(layerableClass);
+        
+        if (selLayers==null || selLayers.size() == 0){
+            return null;
+        }
+        
+        return ((Layerable[])selLayers.toArray(new Layerable[0]))[0];
+    }
+    
+    /**
+     * get one Layer that is selected
+     * @param context the current WorkbenchContext
+     * @return one selected Layer, null if no Layers are selected
+     */
+    public static Layerable getSelectedLayerable(WorkbenchContext context, Class layerableClass){
         
         Collection selLayers = context.getLayerNamePanel().selectedNodes(layerableClass);
         

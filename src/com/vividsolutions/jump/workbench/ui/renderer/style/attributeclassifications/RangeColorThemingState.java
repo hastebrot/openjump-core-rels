@@ -86,10 +86,23 @@ public class RangeColorThemingState implements ColorThemingStylePanel.State {
         //Obtain even distribution. [Jon Aquino]
         ArrayList attributeValueList = new ArrayList(attributeValues);
         Set filteredValues = new TreeSet();
-        CollectionUtil.stretch(
-            attributeValueList,
-            filteredValues,
-            maxFilteredSize);
+        double min = ((Number)attributeValues.first()).doubleValue();
+        double max = ((Number)attributeValues.last()).doubleValue();
+        double range = max-min;
+        for (int i = 0 ; i < maxFilteredSize ; i++) {
+            double threshold = min + range*i/maxFilteredSize;
+            if (attributeValues.first() instanceof Double) {
+                filteredValues.add(attributeValues.tailSet(new Double(threshold)).first());
+            }
+            else if (attributeValues.first() instanceof Integer) {
+                filteredValues.add(attributeValues.tailSet(new Integer((int)threshold)).first());
+            }
+            else {}
+        }
+        //CollectionUtil.stretch(
+        //    attributeValueList,
+        //    filteredValues,
+        //    maxFilteredSize);
         return filteredValues;
     }
     private JPanel panel = new JPanel(new GridBagLayout()) {

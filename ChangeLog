@@ -1,3 +1,439 @@
+2010-11-30 Matthias Scholz <ms@jammerhund.de>
+	* WorkbenchFrame
+		* changed the messageLabel to a JTextfield for copy&paste the content
+	* added ui.WorkbenchFrame.copy-to-clipboard I18n key for the tooltip
+
+2010-11-23 mmichaud <michael.michaud@free.fr>
+	* Several bugs fixed in Simple query tool (QueryDialog.java)
+		* remove the useless cancel button
+		* stop the querying process if exit button is clicked (dialog was just
+		  hidden, but the query was going on)
+		* move Thread.yield so that process can be interrupted anytime, not
+		  just when a feature retained in the query is found
+		* deactivate refresh button while processing the query
+
+2010-11-22 Matthias Scholz <ms@jammerhund.de>
+	* WorkbenchFrame.jbInit():
+		*add a MouseListener to the messageLabel which is copying the text of the statusbar to the clipboard
+
+2010-11-15 mmichaud <michael.michaud@free.fr>
+    * Changed version number to 1.4.1alpha
+    * Fixed a NPE in ExtractLayersByAttribute
+
+2010-11-07 mmichaud <michael.michaud@free.fr>
+
+           **** new release of OpenJUMP 1.4.0.2 ****
+    
+    * postgresql driver replaced by a newer one (for pgsql 9.0 compatibility)
+    * openjump bundled with Sextante and postgis plugin fixed :
+      (1) quick fix in linux/macos script (thanks to edgar soldin)
+      (2) postgis plugin made java5 compatible thanks to Uwe Dall�ge
+
+2010-11-02 mmichaud <michael.michaud@free.fr>
+    * small fix small fix in the ClassifyAttributesPlugIn UI
+      (still UI improvement to do and NPE to fix - see nov 2010 threads)
+
+2010-10-26 mentaer <sstein@geo.unizh.ch>
+
+           **** new release of OpenJUMP 1.4.0.1 ****
+    * fixed serious problems in OpenJUMPSextanteRasterLayer and 
+      RasterImageLayer.java
+           
+2010-10-26 mentaer <sstein@geo.unizh.ch>
+    * fixed raster-read bug, that occurs when several rasters are created with
+      Sextante, and then these rasters should be converted or displayed in
+      different colors. 
+      changed OJ version 1.4.0.1 to reflect change
+           
+2010-10-24 mentaer <sstein@geo.unizh.ch>
+
+           **** release of OpenJUMP 1.4 ****
+           
+2010-10-18 mmichaud <michael.michaud@free.fr>
+    * Fixed ChangeLayerableNamePlugIn always visible in Layer menu
+
+2010-10-16 mmichaud <michael.michaud@free.fr>
+    * try to fix bug 3085542. Needs to check if there is no side effects 
+
+2010-10-14 mmichaud <michael.michaud@free.fr>
+    * fixed the way RangeColorTheming works (it was something close to quantile,
+      it is now equal intervals).
+
+2010-10-09 mmichaud <michael.michaud@free.fr>
+    * slight change in the way ExtractLayerByGeometryType handle empty geometries
+    * better handling of empty geometries in shapefile reader/writer
+      (empty geometries were already read, except for Point geometries, but
+       were not correctly write)
+
+2010-10-06 mmichaud <michael.michaud@free.fr>
+    * Improve speed of LayerTableModel#removeAll
+
+2010-10-02 mmichaud <michael.michaud@free.fr>
+    * Fixed a bug in LayerPropertiesPlugIn introduced by charset handling
+
+2010-09-30 mmichaud <michael.michaud@free.fr>
+    * Fixed a bug in AffineTransformationPlugIn due to french language file
+      Prepare migration from jump's AffineTransformation to JTS's
+
+2010-09-21 Matthias Scholz <ms@jammerhund.de>
+	* Added OptionPanel for dataset options -> showing charset selection or not
+		* added org.openjump.core.ui.DatasetOptionsPanel
+		* com.vividsolutions.jump.workbench.ui.plugin.OptionsPlugIn
+			* added DatasetOptionsPanel
+		* org.openjump.OpenJumpConfiguration
+			* charset Option now depends on the settings in the options
+		* com.vividsolutions.jump.workbench.datasource.InstallStandardDataSourceQueryChoosersPlugIn
+			* changed getSouthComponent1()
+		* improved org.openjump.core.ui.io.file.AbstractFileLayerLoader
+			* added removeOption() methods
+		* org.openjump.core.ui.io.file.Option
+			* added/overwrite equals() method for org.openjump.core.ui.io.file.AbstractFileLayerLoader.removeOption()
+		* translation, keys added:
+			* ui.DatasetOptionsPanel.datasetOptions
+			* ui.DatasetOptionsPanel.ShowCharsetSelection
+
+2010-09-06 Matthias Scholz <ms@jammerhund.de>
+	* Changes for save dataset as shapefile / fieldnames with charset settings
+		* org.geotools.dbffile.DbfFieldDef
+		* org.geotools.dbffile.DbfFile
+			* init()
+			* get/setCharset() removed, because Charset is set with the constructor
+		* org.geotools.dbffile.DbfFileWriter
+			* writeHeader()
+			* writeRecord()
+			* getCharset()/setCharset()
+		* com.vividsolutions.jump.workbench.datasource.InstallStandardDataSourceQueryChoosersPlugIn
+			* addFileDataSourceQueryChoosers(): added charset combobox for the save dataset as dialog
+		* com.vividsolutions.jump.io.ShapefileReader
+			* read()
+				* moved back the charset code outsite the "if ( mydbf == null )" brunch,
+				  for reading the fieldnames with charset
+			* getDbfFile() -> charset stuff
+		* com.vividsolutions.jump.io.ShapefileWriter
+			* write(), writeDbf()
+				* charset stuff
+	* org.openjump.OpenJumpConfiguration
+		* changed the key of the charset option; now we use a non localized key
+	* language fieles jump_de.properties and jump_en.properties (line 445)
+		* key "org.openjump.core.ui.plugin.file.charset" changed
+		  to "org.openjump.core.ui.io.file.DataSourceFileLayerLoader.charset"
+	* org.openjump.core.ui.plugin.file.open.SelectFileOptionsPanel
+		* addIndividualSettingsFields() -> translation of the option key activated (line 168)
+	* org.openjump.core.ui.plugin.layer.LayerPropertiesPlugIn
+		* shows the charset setting if we have a shapefile
+
+2010-09-05 mmichaud <michael.michaud@free.fr>
+    * setting vertex style on a layer without attribute don't remove basic
+      style anymore (bug report ID: 3043312).
+      class de.latlon.deejump.plugin.style.DeeRenderingStylePanel fixed
+      warning : RenderingStylePanel and ChangeStylesPlugIn are deprecated
+
+2010-09-04 mmichaud <michael.michaud@free.fr>
+    * fixed a bug in the JFileChooser of SaveImageAsPlugIn
+      options did take the place of JFileChooser default options.
+      now, options are on the right side of JFileChooser
+      added also an I18N key for the image size option
+
+2010-09-04 mmichaud <michael.michaud@free.fr>
+    * fixed a NPE in org.openjump.core.attributeoperations.AttributeOp
+
+2010-09-04 mmichaud <michael.michaud@free.fr>
+    * fixed bugs in editable function and operator of the simple query plugin
+    
+2010-09-04 mmichaud <michael.michaud@free.fr>
+    * replaced peppe's OJ.exe file by a OpenJUMP.exe + OpenJUMP.ini file
+      created with WinRun4J free software (http://winrun4j.sourceforge.net/)
+      warning : I deactivated VERSION filter in "dist" target of build file,
+      because it did corrupt the .exe file (and seemed unused)
+
+2010-09-04 mmichaud <michael.michaud@free.fr>
+    * fixed a NPE in ShapefileReader arising with shapefiles without dbf
+    
+2010-09-03 Matthias Scholz <ms@jammerhund.de>
+	* com.vividsolutions.jump.io.ShapefileReader
+		* read() fix for loading a Shapefile from a project or with the legacy "Load Dataset" method
+		  in both cases the default CharSet is used
+
+2010-09-03 Matthias Scholz <ms@jammerhund.de>
+	* Possibility to select a charset for opening a ESRI Shape file (String attributes)
+	* language/jump_de.properties, language/jump_en.properties
+		* added key org.openjump.core.ui.plugin.file.charset
+	* org.openjump.OpenJumpConfiguration
+		* loadOpenJumpPlugIns() added Field Component Factory for "CharSetComboBoxField"
+		* postExtensionInitialization() added FileLoader option for shape files
+	* com.vividsolutions.jump.io.ShapefileReader
+		* read() added charset setting for DbfFile (mydbf)
+	* org.geotools.dbffile.DbfFile
+		* added private variable charset and getter/setter methods
+		* ParseRecordColumn(byte[] rec, int wantedCol) changed for creating returning String column with Charset
+	* org.openjump.core.ui.plugin.file.open.OpenFileWizardState
+		* getNextPanel() fixed wrong String comparison
+
+2010-09-03 Matthias Scholz <ms@jammerhund.de>
+	* Patch for selectionstyling
+	* added org.openjump.core.ui.SelectionStyllingOptionsPanel class
+	* com.vividsolutions.jump.workbench.ui.plugin.initialize()
+		* SelectionStyllingOptionsPanel added
+	* com.vividsolutions.jump.workbench.ui.renderer.AbstractSelectionRenderer
+		* AbstractSelectionRenderer() changed
+		* paint(Geometry geometry, Graphics2D g, Viewport viewport) changed
+		* setSelectionLineColor() added
+		* setSelectionPointSize() added
+		* setSelectionPointForm() added
+	* com.vividsolutions.jump.workbench.ui.renderer.FeatureSelectionRenderer  changed
+	* com.vividsolutions.jump.workbench.ui.renderer.style.VertexStyle
+		* Bugfix render(Graphics2D g) - outline draw and fill interchanged for right display of the vertices
+	* language files
+		* com.vividsolutions.jump.jump.properties
+		* language.jump_de.properties
+		
+2010-09-02 kdneufeld <>
+    * Added isReadOnly property to FeatureSchema, and modified the code of
+      AttributeTablePanel and LayerTableModel to prevent user modification
+      of readonly attributes.
+
+2010-08-29 sstein <sstein@geo.uzh.ch>
+	added 5 statistic functions:  
+	(i):   Create Bar Plot
+	(ii):  Create Histogram
+	(iii): Create Scatter Plot
+	(iv):  Classify Attributes
+	(v):   Calculate Mean and Variance per Class
+	
+	added all five new plugins/functions to the package
+	org.openjump.core.ui.plugin.tools.statistics
+	
+2010-08-29 sstein <sstein@geo.uzh.ch>
+	set OJ version to 1.4
+	
+2010-08-29 sstein <sstein@geo.uzh.ch>
+	removed log4j 1.2.8 and added log4j 1.2.16
+	
+2010-08-26 sstein <sstein@geo.uzh.ch>
+	added 4 functions for working with sextante rasters in (new) menu "Raster":  
+	(i):   Create Lattice from Image
+	(ii):  Create Polygon Grid from Image
+	(iii): Profile Graph
+	(iv):  Raster Color Editor
+	
+	Note, the profile graph creates a plot. So I added the JMathPlot library to
+	the OJ lib folder.
+	
+	new packages with classes: 
+	org.openjump.core.ui.color.*
+	org.openjump.core.ui.plot.*
+	org.openjump.core.ui.plugin.raster.*
+	
+2010-08-09 sstein <sstein@geo.uzh.ch>
+	ESRI ASCII grids can now be read in as Sextante Raster. Alberto did send me the code
+	for the changes (see JPP devel list)   
+	
+	changed classes:
+	org.openjump.core.rasterimage.RasterImageLayer
+	org.openjump.core.rasterimage.AddRasterImageLayerWizard
+	org.openjump.core.rasterimage.SelectRasterImageFilesPanel
+	
+	new classes
+	org.openjump.core.rasterimage.GridAscii	
+	
+2010-08-09 sstein <sstein@geo.uzh.ch>
+	needed to revert the following change on 9.Aug.2010 6.35pm MT but 
+	added back on Aug.10:
+	tried to implement dynamic loading of images which decides based on used memory
+	and size of the image/raster if the image is load into memory or just read from
+	file each time pan/zoom is done.
+
+	However, this needs more testing
+	
+	changed classes:
+	org.openjump.core.rasterimage.RasterImageLayer
+	
+2010-08-02 sstein <sstein@geo.uzh.ch>
+	changed access for Pirols RasterImageLayer class, since we need to store the image
+	and the data separately. This way we can adjust the image values without changing
+	the data. To scale image grey values for a better display a function was added to the
+	RasterImageLayer class (e.g. while previously very small values -> 0 have been displayed
+	as black pixels, they are now grey).
+	
+	I removed/renamed the function RasterImageLayer.getImage() to getImageForDisplay()
+	to avoid that other programs work with the stretched/modified image. Hence, I also
+	changed the access in the Sextante classes (e.g.: OpenJUMPSextanteRasterLayer).
+	I tested Loading, Saving and ExtractSelectedPart briefly - so I hope it works.
+	
+	changed classes:
+	org.openjump.core.rasterimage.RasterImageLayer
+	org.openjump.core.rasterimage.AddRasterImageLayerWizard
+	org.openjump.core.ui.plugin.layer.pirolraster.LoadSextanteRasterImagePlugIn
+	org.openjump.core.ui.plugin.layer.pirolraster.SaveRasterImageAsImagePlugIn
+	org.openjump.core.ui.plugin.layer.pirolraster.ExtractSelectedPartOfImage
+	
+	org.openjump.core.rasterimage.sextante.OpenJUMPSextanteRasterLayer
+	note, the corresponding class needs also to be changed in the Sextante repository.
+	
+	Note, in general it is recommended to use OpenJUMPSextanteRasterLayer to do raster
+	operations and not the RasterImageLayer class.
+	
+2010-06-22 mmichaud <michael.michaud@free.fr>
+    Fix bug ID: 2716210 in JoinAttributesSpatiallyPlugIn (SpatialRelationOp).
+    Can now collect attributes from LineStrings intersecting a polygon.
+
+2010-06-22 mmichaud <michael.michaud@free.fr>
+    Fix bug ID: 1775915 in GridRenderer. When grid option was on (with dashed
+    lines), drawing dashed line could be very long at high zoom level.
+
+2010-06-16 mmichaud <michael.michaud@free.fr>
+    While readind a dbf character field, it now gets rid of trailing 0x00 bytes 
+
+2010-06-06 sstein <sstein@geo.uzh.ch>
+    added function to merge selected polygons with neighbor polygons - choosing either 
+    the one with the largest area of all neighbors, or the polygon with the longest
+    shared edge. (in Tools>Analysis>One Layer) The function is similar to 
+    ArcGIS "eliminate".
+    org.openjump.core.ui.plugin.tools.analysis.onelayer.MergeSelectedPolygonsWithNeighbourPlugIn
+
+2010-06-04 beckerl <becker.larry@gmail.com>
+	Changed Label Style so that vertical alignment works for polygons. Default is now Above.
+    com.vividsolutions.jump.workbench.ui.renderer.style.LabelStyle.java
+    
+2010-05-27 sstein <sstein@geo.uzh.ch>
+    added function to intersect polygons of one layer (in Tools>Analysis>One Layer)
+    org.openjump.core.ui.plugin.tools.analysis.onelayer.IntersectPolygonsOneLayerPlugIn
+    
+2010-05-27 michaudm <michael.michaud@free.fr>
+    fixed bug ID:3007431 (loading empty postgis tables)
+    improved mixed-case schema/table/column name management
+    
+2010-04-26 sstein <sstein@geo.uzh.ch>
+    fixed error in median calculation of
+    org.openjump.core.attributeoperations.AttributeOp 
+    
+2010-04-10 michaudm <michael.michaud@free.fr>
+    improved UnionByAttribute adding better warnings and output messages if
+    invalid geometries are found (may slow down the whole process)
+
+2010-04-07 michaudm <michael.michaud@free.fr>
+    improved ExplodeSelectedFeatures performance avoiding to clone many
+    coordinates uselessly (where many means, for each GeometryCollection, total
+    number of coord x number of single geometries)
+
+2010-04-03 michaudm <michael.michaud@free.fr>
+    add InvertSelectionPlugIn
+    add Larry's SelectAllModifiedFeaturesPlugIn in the default-plugin.xml
+
+2010-03-21 michaudm <michael.michaud@free.fr>
+    SimpleQueryPlugIn : added geometric op for strict inclusion ("TFFTFF***")
+    and fixed a bug in buffer function
+
+2010-03-21 michaudm <michael.michaud@free.fr>
+    org.geotools.shapefile.PolygonHandler
+    Keep invalid linear rings in userData so that they can be retrieved
+    Add a BeanTool to retrieve invalid shapefile rings
+
+2010-03-15 beckerl <becker.larry@gmail.com>
+    org.openjump.core.ui.plugin.layer.ExtractLayersByGeometry
+    Fixed so that it works with GeometryCollection
+
+2010-03-13 michaudm <michael.michaud@free.fr>
+    Geometry Function Polygonize now returns Polygon or MultiPolygon
+    instead of GeometryCollection
+
+2010-03-13 michaudm <michael.michaud@free.fr>
+    Fix a bug in com.vividsolutions.jump.workbench.ui.EditTransaction
+    Point(null,null,0) in deleteFeature method throwed exception with JTS-1.11
+    replaced by an empty GeometryCollection
+
+2010-03-04 sstein  <sstein@geo.uzh.ch>
+	added Sextante Raster interface classes, so we can process rasters now in OJ
+	
+2010-03-04 sstein  <sstein@geo.uzh.ch>
+	added JTS 1.11
+	changed Maven pom script
+	
+2010-02-12 beckerl <becker.larry@gmail.com>
+	Scalebar can now be modified with BeanShellScripts since getters/setters have been added.
+	jump.workbench.ui.plugin.scalebar.ScaleBarRenderer
+	
+2010-02-12 beckerl <becker.larry@gmail.com>
+	Added optimization to stop drawing while loading layers.  
+	This significantly speeds up loading of large tasks. 
+	core.ui.plugin.file.open.OpenProjectWizard
+	
+2010-02-04 beckerl <becker.larry@gmail.com>
+	OJ now remembers the window location, size, and maximized state in 
+	the workbench-state.xml file and the project files (improved until 10 Feb 2010)
+    jump.workbench.JUMPWorkbench
+    jump.workbench.ui.WorkbenchFrame
+    jump.workbench.ui.plugin.AbstractSaveProjectPlugin
+    jump.workbench.model.Task
+    jump.workbench.model.Task.java2xml
+    jump.util.java2xml.XML2Java
+	core.ui.plugin.file.open.OpenProjectWizard
+    
+2010-02-03 beckerl <becker.larry@gmail.com>
+    core.ui.zoom.AbstractZoomTool
+    core.ui.plugin.tools.ZoomRealtimeTool (2 Feb 2010)
+    mouse wheel image stretch modification, which delays request of 
+    data after 0.7 seconds of mouse wheel operation
+
+2010-01-30 michaudm <michael.michaud@free.fr>
+    * com.vividsolutions.jump.datastore.jdbc.ValueConverterFactory
+    now converts SQL NULL to java null for Integer and Double
+    and DATE to Date (only TimeStamp were converted to Date before)
+    * com.vividsolutions.jump.datastore.postgis.PostgisValueConverterFactory
+    now returns GEOMETRYCOLLECTION EMPTY for null values
+    * org.openjump.core.apitools.FeatureCollectionTools
+    fix bug throwing NPE in the case of null non-numeric attribute values 
+
+2010-01-29 michaudm <michael.michaud@free.fr>
+    com.vividsolutions.jump.workbench.ui.plugin.ViewSchemaPlugIn
+    View Schema can process AttributeType.OBJECT
+
+2010-01-27 michaudm <michael.michaud@free.fr>
+    better handling of null attributes and date attributes in queries
+    ui.plugin.queries.Condition
+    ui.plugin.queries.Function
+    ui.plugin.queries.Operator
+    ui.plugin.queries.QueryDialog
+    
+2010-01-25 michaudm <michael.michaud@free.fr>
+    com.vividsolutions.jump.workbench.ui.plugin.datastore.RunDataStoreQueryPlugIn
+    cancel the current query if the thread is interrupted
+
+2010-01-07 beckerl <becker.larry@gmail.com>
+    core.ui.plugin.view.MapToolTipPlugIn
+    Added support for _p attribute name suffix that assumes the string is an
+    image file path.
+    
+2010-01-05 mentaer <sstein@geo.unizh.ch>
+    fixed bug 2926111: "select all layer items" function considers the
+    visibility of layer now
+    
+2009-12-23 beckerl <becker.larry@gmail.com>
+    core.ui.plugin.view.NorthArrowPlugIn
+    North Arrow is a View menu option.  There is no GIU, but you can set
+    alignment and style options with Beanshell.
+    
+2009-12-14 beckerl <becker.larry@gmail.com>
+    core.ui.plugin.customize.CmdRunner
+    Class adds support for running external programs, reading their output, and
+    setting environment variables.
+
+2010-12-11 michaudm <michael.michaud@free.fr>
+    fixed a bug by adding createTaskWindowMustBeActiveCheck with ClipToFencePlugin
+    
+2009-12-11 beckerl <becker.larry@gmail.com>
+    com.vividsolutions.jump.geom.CoordUtil
+    org.openjump.core.ui.plugin.mousemenu.MoveAlongAnglePlugIn
+    and org.openjump.core.ui.plugin.mousemenu.PasteItemsAtPlugIn
+    do not drop Z any more
+    now interpolating Z values for normal cases
+    
+2009-12-09 beckerl <becker.larry@gmail.com>
+    core.ui.plugin.view.EasyButtonsPlugin
+    The EZ Buttons plugin adds to the View menu an option to display a button
+    panel that can be programed with existing menu options and activated with
+    both the buttons and Function Keys F1-10
+
 2009-12-06 mentaer <sstein@geo.unizh.ch>
 
            **** release of OpenJUMP 1.3.1 ****

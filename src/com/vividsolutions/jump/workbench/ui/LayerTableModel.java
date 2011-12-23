@@ -245,6 +245,12 @@ public class LayerTableModel extends ColumnBasedTableModel {
             return false;
         }
 
+		FeatureSchema schema = 
+			layer.getFeatureCollectionWrapper().getFeatureSchema();
+		if (schema.isAttributeReadOnly(schema.getAttributeIndex(getColumn(
+				columnIndex).getName())))
+			return false;
+
         return true;
     }
 
@@ -253,29 +259,52 @@ public class LayerTableModel extends ColumnBasedTableModel {
         fireTableChanged(new TableModelEvent(this));
     }
 
-    public void removeAll(Collection featuresToRemove) {
-        for (Iterator i = featuresToRemove.iterator(); i.hasNext();) {
-            Feature feature = (Feature) i.next();
-            int row = features.indexOf(feature);
-            if (row == -1) {
-                //A LayerTableModel might not have all the features in a layer
-                //i.e. a FeatureInfo window, as opposed to a complete Attributes window. [Jon Aquino]
-                continue;
-            }
-            features.remove(row);
-            fireTableChanged(
-                new TableModelEvent(
-                    this,
-                    row,
-                    row,
-                    TableModelEvent.ALL_COLUMNS,
-                    TableModelEvent.DELETE));
+    //public void removeAll(Collection featuresToRemove) {
+    //    //if (featuresToRemove.size() > 100) {
+    //    //    removeAllFast(featuresToRemove);
+    //    //    return;
+    //    //}
+    //    for (Iterator i = featuresToRemove.iterator(); i.hasNext();) {
+    //        Feature feature = (Feature) i.next();
+    //        int row = features.indexOf(feature);
+    //        if (row == -1) {
+    //            //A LayerTableModel might not have all the features in a layer
+    //            //i.e. a FeatureInfo window, as opposed to a complete Attributes window. [Jon Aquino]
+    //            continue;
+    //        }
+    //        features.remove(row);
+    //        fireTableChanged(
+    //            new TableModelEvent(
+    //                this,
+    //                row,
+    //                row,
+    //                TableModelEvent.ALL_COLUMNS,
+    //                TableModelEvent.DELETE));
+    //    }
+    //}
+    
+    private void removeAll(Collection featuresToRemove) {
+        List<Integer> idsToRemove = new ArrayList<Integer>();
+        for (Iterator it = featuresToRemove.iterator() ; it.hasNext() ; ) {
+            idsToRemove.add(((Feature)it.next()).getID());
         }
+        Collections.sort(idsToRemove);
+        ArrayList newFeatures = new ArrayList();
+        for (Iterator it = features.iterator() ; it.hasNext() ; ) {
+            Feature f = (Feature)it.next();
+            if (Collections.binarySearch(idsToRemove, f.getID()) < 0) {
+                newFeatures.add(f);
+            }
+        }
+        features = newFeatures;
+        fireTableChanged(new TableModelEvent(this));
     }
 
     public void addAll(Collection newFeatures) {
         int originalFeaturesSize = features.size();
-        features.addAll(newFeatures);
+        Collection newFeaturesOnly = new ArrayList(newFeatures);
+        newFeaturesOnly.removeAll(features);
+        features.addAll(newFeaturesOnly);
 
         if (sortedColumnName != null) {
             sort(sortedColumnName, sortAscending);

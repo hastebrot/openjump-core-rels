@@ -21,7 +21,7 @@
       <outputDirectory>/bin</outputDirectory>
       <fileMode>755</fileMode>
       <includes>
-        <include>openjump.sh</include>
+        <include>oj_linux.sh</include>
       </includes>
     </fileSet>
     <fileSet>
@@ -48,7 +48,7 @@
     </fileSet>
     <fileSet>
       <directory>dist/etc</directory>
-      <outputDirectory>/conf</outputDirectory>
+      <outputDirectory>/bin</outputDirectory>
       <includes>
         <include>log4j.xml</include>
       </includes>

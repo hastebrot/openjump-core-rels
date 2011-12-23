@@ -46,6 +46,7 @@ import org.geotools.shapefile.Shapefile;
 import java.io.*;
 
 import java.net.URL;
+import java.nio.charset.Charset;
 
 import java.util.*;
 
@@ -264,13 +265,10 @@ public class ShapefileWriter implements JUMPWriter {
         loc = shpfileName.lastIndexOf(File.separatorChar);
 
         if (loc == -1) {
-            // loc = 0; // no path - ie. "hills.shp"
-            // path = "";
-            // fname = shpfileName;
-            //probably using the wrong path separator character.
+            // probably using the wrong path separator character.
             throw new Exception("couldn't find the path separator character '" +
                 File.separatorChar +
-                "' in your shape file name. This you're probably using the unix (or dos) one.");
+                "' in your shape file name. This means you're probably using the unix (or dos) one.");
         } else {
             path = shpfileName.substring(0, loc + 1); // ie. "/data1/hills.shp" -> "/data1/"
             fname = shpfileName.substring(loc + 1); // ie. "/data1/hills.shp" -> "hills.shp"
@@ -285,7 +283,9 @@ public class ShapefileWriter implements JUMPWriter {
         fname_withoutextention = fname.substring(0, loc); // ie. "hills.shp" -> "hills."
         dbffname = path + fname_withoutextention + ".dbf";
 
-        writeDbf(featureCollection, dbffname);
+		String charsetName = dp.getProperty("charset");
+		if (charsetName == null) charsetName = Charset.defaultCharset().name();
+        writeDbf(featureCollection, dbffname, Charset.forName(charsetName));
 
         // this gc will be a collection of either multi-points, multi-polygons, or multi-linestrings
         // polygons will have the rings in the correct order
@@ -308,11 +308,11 @@ public class ShapefileWriter implements JUMPWriter {
                 shapeType = 4;
             } else {
                 throw new IllegalParametersException(
-                    "ShapefileWriter.write() - dataproperties has a 'ShapeType' that isnt 'xy', 'xym', or 'xymz'");
+                    "ShapefileWriter.write() - dataproperties has a 'ShapeType' that isn't 'xy', 'xym', or 'xymz'");
             }
         } else {
             if (gc.getNumGeometries() > 0) {
-                shapeType = guessCoorinateDims(gc.getGeometryN(0));
+                shapeType = guessCoordinateDims(gc.getGeometryN(0));
             }
         }
 
@@ -330,13 +330,13 @@ public class ShapefileWriter implements JUMPWriter {
     }
 
     /**
-     *Returns: <br>
-    *2 for 2d (default) <br>
-    *4 for 3d  - one of the oordinates has a non-NaN z value <br>
-    *(3 is for x,y,m but thats not supported yet) <br>
-     *@param g geometry to test - looks at 1st coordinate
-     **/
-    public int guessCoorinateDims(Geometry g) {
+     * Returns: <br>
+     * 2 for 2d (default) <br>
+     * 4 for 3d  - one of the oordinates has a non-NaN z value <br>
+     * (3 is for x,y,m but thats not supported yet) <br>
+     * @param g geometry to test - looks at 1st coordinate
+     */
+    public int guessCoordinateDims(Geometry g) {
         Coordinate[] cs = g.getCoordinates();
 
         for (int t = 0; t < cs.length; t++) {
@@ -348,12 +348,29 @@ public class ShapefileWriter implements JUMPWriter {
         return 2;
     }
 
+	/**
+	 * Write a dbf file with the information from the featureCollection.
+	 * For compatibilty reasons, this method is
+	 * is now a wrapper for the changed/new one with Charset functions.
+	 *
+	 * @see writeDbf(FeatureCollection featureCollection, String fname, Charset charset)
+	 *
+	 * @param featureCollection
+	 * @param fname
+	 * @throws Exception
+	 */
+	void writeDbf(FeatureCollection featureCollection, String fname) throws Exception {
+		writeDbf(featureCollection, fname, Charset.defaultCharset());
+	}
+
     /**
      * Write a dbf file with the information from the featureCollection.
      * @param featureCollection column data from collection
      * @param fname name of the dbf file to write to
+     * July 2, 2010 - modified by beckerl to read existing dbf file header
+     * and use the existing numeric field definitions.
      */
-    void writeDbf(FeatureCollection featureCollection, String fname)
+    void writeDbf(FeatureCollection featureCollection, String fname, Charset charset)
         throws Exception {
         DbfFileWriter dbf;
         FeatureSchema fs;
@@ -362,6 +379,18 @@ public class ShapefileWriter implements JUMPWriter {
         int u;
         int num;
 
+        HashMap fieldMap = null;
+        if (new File(fname).exists()){
+        	DbfFile dbfFile = new DbfFile(fname);
+        	int numFields = dbfFile.getNumFields();
+        	fieldMap = new HashMap(numFields);
+        	for (int i = 0; i<numFields; i++) {
+        		String fieldName = dbfFile.getFieldName(i);
+        		fieldMap.put(fieldName, dbfFile.fielddef[i]);
+        	}
+        	dbfFile.close();
+        }
+        
         fs = featureCollection.getFeatureSchema();
 
         // -1 because one of the columns is geometry
@@ -375,11 +404,13 @@ public class ShapefileWriter implements JUMPWriter {
             String columnName = fs.getAttributeName(t);
 
             if (columnType == AttributeType.INTEGER) {
-                fields[f] = new DbfFieldDef(columnName, 'N', 16, 0);
-                f++;
+                fields[f] = new DbfFieldDef(columnName, 'N', 11, 0);  //LDB: previously 16
+                fields[f] = overrideWithExistingCompatibleDbfFieldDef(fields[f], fieldMap);
+               f++;
             } else if (columnType == AttributeType.DOUBLE) {
                 fields[f] = new DbfFieldDef(columnName, 'N', 33, 16);
-                f++;
+                fields[f] = overrideWithExistingCompatibleDbfFieldDef(fields[f], fieldMap);
+               f++;
             } else if (columnType == AttributeType.STRING) {
                 int maxlength = findMaxStringLength(featureCollection, t);
 
@@ -389,7 +420,8 @@ public class ShapefileWriter implements JUMPWriter {
                 }
 
                 fields[f] = new DbfFieldDef(columnName, 'C', maxlength, 0);
-                f++;
+                //fields[f] = overrideWithExistingCompatibleDbfFieldDef(fields[f], fieldMap);
+               f++;
             } else if (columnType == AttributeType.DATE) {
                 fields[f] = new DbfFieldDef(columnName, 'D', 8, 0);
                 f++;                
@@ -403,6 +435,7 @@ public class ShapefileWriter implements JUMPWriter {
 
         // write header
         dbf = new DbfFileWriter(fname);
+		dbf.setCharset(charset);
         dbf.writeHeader(fields, featureCollection.size());
 
         //write rows
@@ -464,6 +497,32 @@ public class ShapefileWriter implements JUMPWriter {
         dbf.close();
     }
 
+    private DbfFieldDef overrideWithExistingCompatibleDbfFieldDef(DbfFieldDef field, Map columnMap) {
+    	String fieldname = field.fieldname.toString().trim();
+    	if ((columnMap != null) && (columnMap.containsKey(fieldname))) {
+    		DbfFieldDef dbfFieldDef = (DbfFieldDef) columnMap.get(fieldname);
+    		dbfFieldDef.fieldname = field.fieldname;    //must have null padded version to work
+    		switch(dbfFieldDef.fieldtype){
+    		case 'C': case 'c':  //character case not working yet
+    			if (field.fieldtype == 'C')
+    				if (field.fieldlen > dbfFieldDef.fieldlen)  //allow string expansion if needed
+    					return field;
+    				else {
+    					dbfFieldDef.fieldtype = field.fieldtype;
+    					return dbfFieldDef; 
+    				}
+    			break;
+    		case 'N': case 'n': case 'F': case 'f':
+    			if (field.fieldtype == 'N') {
+    				dbfFieldDef.fieldtype = field.fieldtype;
+    				return dbfFieldDef;   
+    			}
+    			break;
+    		}   		
+    	}
+    	return field;
+    }
+
     /**
      *look at all the data in the column of the featurecollection, and find the largest string!
      *@param fc features to look at
@@ -490,51 +549,59 @@ public class ShapefileWriter implements JUMPWriter {
     /**
      * Find the generic geometry type of the feature collection.
      * Simple method - find the 1st non null geometry and its type
-     *  is the generic type.
-    * returns 0 - all empty/invalid <br>
-    *         1 - point <br>
-    *         2 - line <br>
-    *         3 - polygon <br>
+     * is the generic type.
+     * returns  0 : only empty geometry collection <br>
+     *          1 : only single points<br>
+     *          3 : at least one line or multiline<br>
+     *          5 : at least one polygon or multipolygon <br>
+     *          8 : at least one multipoint<br>
+     *         31 : only non empty geometry collection<br>
      *@param fc feature collection containing tet geometries.
      **/
     int findBestGeometryType(FeatureCollection fc) {
         Geometry geom;
+        boolean onlyPoints = true;
+        boolean onlyEmptyGeometryCollection = true;
         // [mmichaud 2007-06-12] : add the type variable to test if
         // all geometries are single Point
         // maybe it would be clearer using shapefile types integer for type
-        int type = 0;
         
         for (Iterator i = fc.iterator(); i.hasNext();) {
             geom = ((Feature) i.next()).getGeometry();
 
-            if (geom instanceof Point) {
-                // [mmichaud 2007-06-12] type is -1 while geometries are Point
-                type = -1;
+            if (onlyPoints && !(geom instanceof Point)) {
+                onlyPoints = false;
+            }
+            
+            if (onlyEmptyGeometryCollection && !(geom.isEmpty())) {
+                onlyEmptyGeometryCollection = false;
             }
 
             if (geom instanceof MultiPoint) {
-                return 1;
+                return 8;
             }
 
             if (geom instanceof Polygon) {
-                return 3;
+                return 5;
             }
 
             if (geom instanceof MultiPolygon) {
-                return 3;
+                return 5;
             }
 
             if (geom instanceof LineString) {
-                return 2;
+                return 3;
             }
 
             if (geom instanceof MultiLineString) {
-                return 2;
+                return 3;
             }
         }
-
-        return type; // return  0 if all geometries are null
-                     // return -1 if all geometries are single point
+        
+        if (onlyPoints) return 1;
+        else if (onlyEmptyGeometryCollection) return 0;
+        else return 31;
+        
     }
 
     public void checkIfGeomsAreMixed(FeatureCollection featureCollection)
@@ -543,9 +610,8 @@ public class ShapefileWriter implements JUMPWriter {
 	    int i= 0;
 	    Class firstClass = null;
 	    Geometry firstGeom = null;
-		System.out.println("ShapeFileWriter: start mixed-geom-test");
+		//System.out.println("ShapeFileWriter: start mixed-geom-test");
 	    for (Iterator iter = featureCollection.iterator(); iter.hasNext();) {
-	    	//System.out.println("test");
 			Feature myf = (Feature) iter.next();
 			if (i==0){
 				firstClass = myf.getGeometry().getClass();
@@ -584,7 +650,7 @@ public class ShapefileWriter implements JUMPWriter {
 	}
     
     /**
-     *  reverses the order of points in lr (is CW -> CCW or CCW->CW)
+     *  Reverses the order of points in lr (is CW -> CCW or CCW->CW)
      */
     LinearRing reverseRing(LinearRing lr) {
         int numPoints = lr.getNumPoints();
@@ -598,10 +664,13 @@ public class ShapefileWriter implements JUMPWriter {
     }
 
     /**
-    * make sure outer ring is CCW and holes are CW
-     *@param p polygon to check
+     * make sure outer ring is CCW and holes are CW
+     * @param p polygon to check
      */
     Polygon makeGoodSHAPEPolygon(Polygon p) {
+        
+        if (p.isEmpty()) return p;
+        
         LinearRing outer;
         LinearRing[] holes = new LinearRing[p.getNumInteriorRing()];
         Coordinate[] coords;
@@ -616,7 +685,6 @@ public class ShapefileWriter implements JUMPWriter {
 
         for (int t = 0; t < p.getNumInteriorRing(); t++) {
             coords = p.getInteriorRingN(t).getCoordinates();
-
             if (!(cga.isCCW(coords))) {
                 holes[t] = reverseRing((LinearRing) p.getInteriorRingN(t));
             } else {
@@ -628,7 +696,7 @@ public class ShapefileWriter implements JUMPWriter {
     }
 
     /**
-    * make sure outer ring is CCW and holes are CW for all the polygons in the Geometry
+     * make sure outer ring is CCW and holes are CW for all the polygons in the Geometry
      *@param mp set of polygons to check
      */
     MultiPolygon makeGoodSHAPEMultiPolygon(MultiPolygon mp) {
@@ -650,7 +718,7 @@ public class ShapefileWriter implements JUMPWriter {
      *  result.GeometryN(i) = the i-th feature in the FeatureCollection<br>
      *   All the geometry types will be the same type (ie. all polygons) - or they will be set to<br>
      *     NULL geometries<br>
-     *<br>
+     * <br>
      * GeometryN(i) = {Multipoint,Multilinestring, or Multipolygon)<br>
      *
      *@param fc feature collection to make homogeneous
@@ -662,21 +730,25 @@ public class ShapefileWriter implements JUMPWriter {
         
         int geomtype = findBestGeometryType(fc);
 
-        if (geomtype == 0) {
+        if (geomtype == 31) {
             throw new Exception(
-                "Could not determine shapefile type - data is either all GeometryCollections or empty");
+                "Could not determine shapefile type - data is all GeometryCollections");
         }
 
         List features = fc.getFeatures();
 
         for (int t = 0; t < features.size(); t++) {
-            Geometry geom;
-            geom = ((Feature) features.get(t)).getGeometry();
+            
+            Geometry geom = ((Feature) features.get(t)).getGeometry();
 
             switch (geomtype) {
-            // 2007/06/12 : add -1 case for collections with only single points
-            // maybe it would be clearer using shapefile types integer for geomtype
-            case -1: //single point
+            
+            case 0: //empty geometry collection
+                // empty geometry collections are arbitrarily written in a Point shapefile
+                allGeoms[t] = geom.getFactory().createGeometryCollection(new Geometry[0]);
+                break;
+                
+            case 1: //single point
 
                 if ((geom instanceof Point)) {
                     allGeoms[t] = (Point) geom;
@@ -686,7 +758,7 @@ public class ShapefileWriter implements JUMPWriter {
 
                 break;
                 
-            case 1: //point
+            case 8: //point
 
                 if ((geom instanceof Point)) {
                     //good!
@@ -702,7 +774,7 @@ public class ShapefileWriter implements JUMPWriter {
 
                 break;
 
-            case 2: //line
+            case 3: //line
 
                 if ((geom instanceof LineString)) {
                     LineString[] l = new LineString[1];
@@ -718,7 +790,7 @@ public class ShapefileWriter implements JUMPWriter {
 
                 break;
 
-            case 3: //polygon
+            case 5: //polygon
 
                 if (geom instanceof Polygon) {
                     //good!

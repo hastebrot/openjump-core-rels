@@ -35,6 +35,7 @@ import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.Point;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -58,7 +59,6 @@ import java.util.Set;
 
 import javax.swing.BorderFactory;
 import javax.swing.DefaultDesktopManager;
-import javax.swing.ImageIcon;
 import javax.swing.JDesktopPane;
 import javax.swing.JFrame;
 import javax.swing.JInternalFrame;
@@ -80,14 +80,18 @@ import javax.swing.event.MenuEvent;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 
+import org.openjump.core.model.TaskEvent;
+import org.openjump.core.model.TaskListener;
 import org.openjump.swing.factory.component.ComponentFactory;
 
 import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.util.Assert;
 import com.vividsolutions.jump.I18N;
+import com.vividsolutions.jump.util.Blackboard;
 import com.vividsolutions.jump.util.Block;
 import com.vividsolutions.jump.util.CollectionUtil;
 import com.vividsolutions.jump.util.StringUtil;
+import com.vividsolutions.jump.workbench.JUMPWorkbench;
 import com.vividsolutions.jump.workbench.WorkbenchContext;
 import com.vividsolutions.jump.workbench.model.Category;
 import com.vividsolutions.jump.workbench.model.CategoryEvent;
@@ -107,38 +111,43 @@ import com.vividsolutions.jump.workbench.plugin.AbstractPlugIn;
 import com.vividsolutions.jump.workbench.plugin.EnableCheck;
 import com.vividsolutions.jump.workbench.plugin.PlugIn;
 import com.vividsolutions.jump.workbench.ui.plugin.FeatureInstaller;
+import com.vividsolutions.jump.workbench.ui.plugin.PersistentBlackboardPlugIn;
 import com.vividsolutions.jump.workbench.ui.renderer.style.ChoosableStyle;
 import com.vividsolutions.jump.workbench.ui.task.TaskMonitorManager;
+import javax.swing.JComponent;
+import javax.swing.JTextField;
 
 /**
  * This class is responsible for the main window of the JUMP application.
  */
-public class WorkbenchFrame extends JFrame implements LayerViewPanelContext,
-  ViewportListener {
-  BorderLayout borderLayout1 = new BorderLayout();
+public class WorkbenchFrame extends JFrame 
+	implements LayerViewPanelContext, ViewportListener 
+	{
 
-  JLabel coordinateLabel = new JLabel();
+	BorderLayout borderLayout1 = new BorderLayout();
 
-  JMenuBar menuBar = new JMenuBar();
+	JLabel coordinateLabel = new JLabel();
 
-  JMenu fileMenu = (JMenu)FeatureInstaller.installMnemonic(new JMenu(
-    MenuNames.FILE), menuBar);
+	JMenuBar menuBar = new JMenuBar();
 
-  JMenuItem exitMenuItem = FeatureInstaller.installMnemonic(new JMenuItem(
-    I18N.get("ui.WorkbenchFrame.exit")), fileMenu);
+	JMenu fileMenu = (JMenu) FeatureInstaller.installMnemonic(new JMenu(
+			MenuNames.FILE), menuBar);
 
-  GridBagLayout gridBagLayout1 = new GridBagLayout();
+	JMenuItem exitMenuItem = FeatureInstaller.installMnemonic(new JMenuItem(
+			I18N.get("ui.WorkbenchFrame.exit")), fileMenu);
 
-  JLabel messageLabel = new JLabel();
+	GridBagLayout gridBagLayout1 = new GridBagLayout();
 
-  JPanel statusPanel = new JPanel();
+	JTextField messageTextField = new JTextField();
 
-  JLabel timeLabel = new JLabel();
+	JPanel statusPanel = new JPanel();
 
-  // <<TODO:FEATURE>> Before JUMP Workbench closes, prompt the user to save
-  // any
-  // unsaved layers [Jon Aquino]
-  WorkbenchToolBar toolBar;
+	JLabel timeLabel = new JLabel();
+
+	// <<TODO:FEATURE>> Before JUMP Workbench closes, prompt the user to save
+	// any
+	// unsaved layers [Jon Aquino]
+	WorkbenchToolBar toolBar;
 
   JMenu windowMenu = (JMenu)FeatureInstaller.installMnemonic(new JMenu(
     MenuNames.WINDOW), menuBar);
@@ -195,8 +204,6 @@ public class WorkbenchFrame extends JFrame implements LayerViewPanelContext,
       super.setTitle(I18N.get("ui.WorkbenchFrame.output"));
     }
   };
-
-  private ImageIcon icon;
 
   private TitledPopupMenu layerNamePopupMenu = new TitledPopupMenu() {
     {
@@ -297,6 +304,8 @@ public class WorkbenchFrame extends JFrame implements LayerViewPanelContext,
 
   private ArrayList easyKeyListeners = new ArrayList();
 
+  private ArrayList<TaskListener> taskListeners = new ArrayList<TaskListener>();
+
   private Map nodeClassToLayerNamePopupMenuMap = CollectionUtil.createMap(new Object[] {
     Layer.class, layerNamePopupMenu, WMSLayer.class, wmsLayerNamePopupMenu,
     Category.class, categoryPopupMenu
@@ -310,8 +319,7 @@ public class WorkbenchFrame extends JFrame implements LayerViewPanelContext,
 
   private ComponentFactory<TaskFrame> taskFrameFactory;
 
-  public WorkbenchFrame(String title, ImageIcon icon,
-    final WorkbenchContext workbenchContext) throws Exception {
+  public WorkbenchFrame(String title, final WorkbenchContext workbenchContext) throws Exception {
     setTitle(title);
     new Timer(1000, new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -323,12 +331,17 @@ public class WorkbenchFrame extends JFrame implements LayerViewPanelContext,
       }
     }).start();
     this.workbenchContext = workbenchContext;
-    this.icon = icon;
+	
+    // set icon for the app frame
+    JUMPWorkbench.setIcon(this);  
+    
+    //this.icon = new ImageIcon();
+	//this.icon.setImage(JUMPWorkbench.getIcon());
     toolBar = new WorkbenchToolBar(workbenchContext);
     toolBar.setTaskMonitorManager(new TaskMonitorManager());
     try {
       jbInit();
-      configureStatusLabel(messageLabel, 300);
+	  configureStatusLabel(messageTextField, 300);
       configureStatusLabel(coordinateLabel, 150);
       configureStatusLabel(timeLabel, 200);
       configureStatusLabel(wmsLabel, 100);
@@ -424,8 +437,7 @@ public class WorkbenchFrame extends JFrame implements LayerViewPanelContext,
 
   private void setStatusBarText(String message) {
     // <<TODO:IMPROVE>> Treat null messages like "" [Jon Aquino]
-    messageLabel.setText((message == "") ? " " : message);
-    messageLabel.setToolTipText(message);
+    messageTextField.setText(message.equals("") ? " " : message);
     // Make message at least a space so that status bar won't collapse [Jon
     // Aquino]
   }
@@ -437,15 +449,15 @@ public class WorkbenchFrame extends JFrame implements LayerViewPanelContext,
     // Use #coordinateLabel rather than (unattached) dummy label because
     // dummy label's background does not change when L&F changes. [Jon
     // Aquino]
-    messageLabel.setForeground(highlighted ? Color.black
+    messageTextField.setForeground(highlighted ? Color.black
       : coordinateLabel.getForeground());
-    messageLabel.setBackground(highlighted ? color
+    messageTextField.setBackground(highlighted ? color
       : coordinateLabel.getBackground());
   }
 
   public void setTimeMessage(String message) {
     // <<TODO:IMPROVE>> Treat null messages like "" [Jon Aquino]
-    timeLabel.setText((message == "") ? " " : message);
+    timeLabel.setText(message.equals("") ? " " : message);
 	timeLabel.setToolTipText(message);
     // Make message at least a space so that status bar won't collapse [Jon
     // Aquino]
@@ -545,7 +557,7 @@ public class WorkbenchFrame extends JFrame implements LayerViewPanelContext,
     // <<TODO:IMPROVE>> Listen for when the frame closes, and when it does,
     // activate the topmost frame. Because Swing does not seem to do this
     // automatically. [Jon Aquino]
-    internalFrame.setFrameIcon(icon);
+    JUMPWorkbench.setIcon( internalFrame );
     // Call JInternalFrame#setVisible before JDesktopPane#add; otherwise,
     // the
     // TreeLayerNamePanel starts too narrow (100 pixels or so) for some
@@ -758,6 +770,12 @@ public class WorkbenchFrame extends JFrame implements LayerViewPanelContext,
           log(I18N.get("ui.WorkbenchFrame.undo-history-was-truncated"));
         }
       });
+	  // fire TaskListener's
+	  Object[] listeners =  getTaskListeners().toArray();
+	  for (int i = 0; i < listeners.length; i++) {
+		  TaskListener l = (TaskListener) listeners[i];
+		  l.taskAdded(new TaskEvent(this, taskFrame.getTask()));
+	  }
     return taskFrame;
   }
 
@@ -950,6 +968,15 @@ public class WorkbenchFrame extends JFrame implements LayerViewPanelContext,
     return layersWithModifiedFeatureCollections;
   }
 
+  private Collection getGeneratedLayers() {
+      ArrayList list = new ArrayList();
+      for (Iterator i = getLayerManagers().iterator(); i.hasNext();) {
+        LayerManager layerManager = (LayerManager)i.next();
+        list.addAll(layerManager.getLayersWithNullDataSource());
+      }
+      return list;
+    }
+
   private Collection getLayerManagers() {
     // Multiple windows may point to the same LayerManager, so use
     // a Set. [Jon Aquino]
@@ -963,18 +990,21 @@ public class WorkbenchFrame extends JFrame implements LayerViewPanelContext,
     return layerManagers;
   }
 
-  private void configureStatusLabel(JLabel label, int width) {
-    label.setMinimumSize(new Dimension(width, (int)label.getMinimumSize()
+  private void configureStatusLabel(JComponent component, int width) {
+    component.setMinimumSize(new Dimension(width, (int)component.getMinimumSize()
       .getHeight()));
-    label.setMaximumSize(new Dimension(width, (int)label.getMaximumSize()
+    component.setMaximumSize(new Dimension(width, (int)component.getMaximumSize()
       .getHeight()));
-    label.setPreferredSize(new Dimension(width, (int)label.getPreferredSize()
+    component.setPreferredSize(new Dimension(width, (int)component.getPreferredSize()
       .getHeight()));
   }
 
   private void jbInit() throws Exception {
     setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
-    this.setIconImage(icon.getImage());
+
+    // TODO: insert icon necessary?
+    //JUMPWorkbench.setIcon( this );
+    
     this.addComponentListener(new java.awt.event.ComponentAdapter() {
       public void componentShown(ComponentEvent e) {
         this_componentShown(e);
@@ -998,7 +1028,10 @@ public class WorkbenchFrame extends JFrame implements LayerViewPanelContext,
     // (although it's supposed to be fixed in 1.4.2, which has not yet been
     // released). (see Sun Java Bug ID 4665237). [Jon Aquino]
     // desktopPane.setDragMode(JDesktopPane.OUTLINE_DRAG_MODE);
-    messageLabel.setOpaque(true);
+	messageTextField.setOpaque(true);
+	messageTextField.setEditable(false);
+    messageTextField.setToolTipText(I18N.get("ui.WorkbenchFrame.copy-to-clipboard"));
+	messageTextField.setFont(coordinateLabel.getFont());
     memoryLabel.setText("jLabel1");
     wmsLabel.setHorizontalAlignment(SwingConstants.LEFT);
     wmsLabel.setText(" ");
@@ -1024,8 +1057,8 @@ public class WorkbenchFrame extends JFrame implements LayerViewPanelContext,
     coordinateLabel.setText(" ");
     statusPanel.setLayout(gridBagLayout1);
     statusPanel.setBorder(BorderFactory.createRaisedBevelBorder());
-    messageLabel.setBorder(BorderFactory.createLoweredBevelBorder());
-    messageLabel.setText(" ");
+    messageTextField.setBorder(BorderFactory.createLoweredBevelBorder());
+    messageTextField.setText(" ");
     timeLabel.setBorder(BorderFactory.createLoweredBevelBorder());
     timeLabel.setText(" ");
     memoryLabel.setBorder(BorderFactory.createLoweredBevelBorder());
@@ -1042,7 +1075,7 @@ public class WorkbenchFrame extends JFrame implements LayerViewPanelContext,
     statusPanel.add(timeLabel, new GridBagConstraints(2, 1, 1, 1, 1.0, 0.0,
       GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0,
         0, 0, 0), 0, 0));
-    statusPanel.add(messageLabel, new GridBagConstraints(1, 1, 1, 1, 1.0, 0.0,
+    statusPanel.add(messageTextField, new GridBagConstraints(1, 1, 1, 1, 1.0, 0.0,
       GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0,
         0, 0, 0), 0, 0));
     // Give memoryLabel the 1.0 weight. All the rest should have their
@@ -1185,9 +1218,11 @@ public class WorkbenchFrame extends JFrame implements LayerViewPanelContext,
   private class DefaultApplicationExitHandler implements ApplicationExitHandler {
     public void exitApplication(JFrame mainFrame) {
       if (confirmClose(I18N.get("ui.WorkbenchFrame.exit-jump"),
-        getLayersWithModifiedFeatureCollections())) {
+        getLayersWithModifiedFeatureCollections(),
+        getGeneratedLayers())) {
         // PersistentBlackboardPlugIn listens for when the workbench is
         // hidden [Jon Aquino]
+    	saveWindowState();
         setVisible(false);
         // Invoke System#exit after all pending GUI events have been
         // fired
@@ -1210,7 +1245,8 @@ public class WorkbenchFrame extends JFrame implements LayerViewPanelContext,
     boolean lastTaskFrame = getTaskFramesAssociatedWith(layerManager).size() == 1;
     if (lastTaskFrame) {
       Collection modifiedItems = layerManager.getLayersWithModifiedFeatureCollections();
-      if (confirmClose(I18N.get("ui.WorkbenchFrame.close-task"), modifiedItems)) {
+      Collection generatedItems = layerManager.getLayersWithNullDataSource();
+      if (confirmClose(I18N.get("ui.WorkbenchFrame.close-task"), modifiedItems, generatedItems)) {
         // There are other internal frames associated with this task
         if (associatedFrames.size() != 0) {
           // Confirm you want to close them first
@@ -1255,10 +1291,19 @@ public class WorkbenchFrame extends JFrame implements LayerViewPanelContext,
     }
   }
 
-  private boolean confirmClose(String action, Collection modifiedLayers) {
-    if (modifiedLayers.isEmpty()) {
-      return true;
-    }
+  private boolean confirmClose(String action, Collection modifiedLayers, Collection generatedLayers) {
+        if (modifiedLayers.isEmpty()) {
+            if(generatedLayers.isEmpty()){
+                return true;
+            }
+            JOptionPane pane = new JOptionPane(I18N.getMessage("ui.WorkbenchFrame.do-you-really-want-to-close-openjump-generated-layers-not-saved", new Object[]{Integer.valueOf(generatedLayers.size())}),
+                    JOptionPane.QUESTION_MESSAGE);
+            pane.setOptions(new String[] {
+                    action, I18N.get("ui.WorkbenchFrame.cancel")
+                  });
+            pane.createDialog(this, "JUMP").setVisible(true);
+            return pane.getValue().equals(action);
+        }
     JOptionPane pane = new JOptionPane(
       StringUtil.split(
         modifiedLayers.size()
@@ -1298,4 +1343,84 @@ public class WorkbenchFrame extends JFrame implements LayerViewPanelContext,
     this.taskFrameFactory = taskFrameFactory;
   }
   
-}
+  public final static String MAXIMIZED_KEY = WorkbenchFrame.class.getName()+" - MAXIMIZED_KEY";
+  public final static String HORIZONTAL_KEY = WorkbenchFrame.class.getName()+" - HORIZONTAL_KEY";
+  public final static String VERTICAL_KEY = WorkbenchFrame.class.getName()+" - VERTICAL_KEY";
+  public final static String WIDTH_KEY = WorkbenchFrame.class.getName()+" - WIDTH_KEY";
+  public final static String HEIGHT_KEY = WorkbenchFrame.class.getName()+" - HEIGHT_KEY";
+
+  public void saveWindowState() {
+	  boolean maximized = (this.getExtendedState() == MAXIMIZED_BOTH);
+	  Blackboard blackboard = PersistentBlackboardPlugIn.get(workbenchContext);
+	  blackboard.put(MAXIMIZED_KEY, maximized);	  
+	  Point p = this.getLocation(null);
+	  blackboard.put(HORIZONTAL_KEY, p.x);	    
+	  blackboard.put(VERTICAL_KEY, p.y);	 
+	  Dimension d = this.getSize();
+	  blackboard.put(WIDTH_KEY, d.width);	    
+	  blackboard.put(HEIGHT_KEY, d.height);	 
+  }
+
+  public boolean recallMaximizedState() {
+	  Blackboard blackboard = PersistentBlackboardPlugIn.get(workbenchContext);
+	  boolean maximized = false;
+	  if (blackboard.get(MAXIMIZED_KEY) == null) {
+		  blackboard.put(MAXIMIZED_KEY, maximized);
+	  }
+	  maximized = ((Boolean) blackboard.get(MAXIMIZED_KEY)).booleanValue();
+	  return maximized; 
+  }
+
+  public Point recallWindowLocation() {
+	  Blackboard blackboard = PersistentBlackboardPlugIn.get(workbenchContext);
+	  Point p = new Point(0,0);
+	  if (blackboard.get(HORIZONTAL_KEY) == null) {
+		  blackboard.put(HORIZONTAL_KEY, p.x);
+		  blackboard.put(VERTICAL_KEY, p.y);
+	  }
+	  p.x = ((Integer) blackboard.get(HORIZONTAL_KEY)).intValue();
+	  p.y = ((Integer) blackboard.get(VERTICAL_KEY)).intValue();
+	  return p; 
+  }
+
+  public Dimension recallWindowSize() {
+	  Blackboard blackboard = PersistentBlackboardPlugIn.get(workbenchContext);
+	  Dimension d = new Dimension(900, 665);
+	  if (blackboard.get(WIDTH_KEY) == null) {
+		  blackboard.put(WIDTH_KEY, d.width);
+		  blackboard.put(HEIGHT_KEY, d.height);
+	  }
+	  d.width = ((Integer) blackboard.get(WIDTH_KEY)).intValue();
+	  d.height = ((Integer) blackboard.get(HEIGHT_KEY)).intValue();
+	  return d; 
+  }
+
+
+	/**
+	 * @return the taskListeners
+	 */
+	public ArrayList<TaskListener> getTaskListeners() {
+		return taskListeners;
+	}
+
+  /**
+   * Add's a TaskListener, wich will be fired if a Task was added
+   * via the WorkbenchFrame.addTaskFrame(TaskFrame taskFrame) or
+   * the a Task was loaded completly with all his layers.
+   *
+   * @param l - The TaskListener to add.
+   */
+  public void addTaskListener(TaskListener l) {
+	  	getTaskListeners().add(l);
+  }
+
+  /**
+   * Remove's a TaskListener.
+   *
+   * @param l - The TaskListener to add.
+   */
+  public void removeTaskListener(TaskListener l) {
+	  	getTaskListeners().remove(l);
+  }
+
+	}

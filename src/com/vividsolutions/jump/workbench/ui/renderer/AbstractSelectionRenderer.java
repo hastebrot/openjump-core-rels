@@ -45,7 +45,6 @@ import java.util.*;
 import javax.swing.Icon;
 
 import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.util.Assert;
 import com.vividsolutions.jump.feature.Feature;
@@ -56,6 +55,8 @@ import com.vividsolutions.jump.workbench.ui.LayerViewPanel;
 import com.vividsolutions.jump.workbench.ui.Viewport;
 import com.vividsolutions.jump.workbench.ui.renderer.style.Style;
 import com.vividsolutions.jump.workbench.ui.renderer.style.StyleUtil;
+import com.vividsolutions.jump.workbench.ui.renderer.style.VertexStyle;
+import de.latlon.deejump.plugin.style.VertexStylesFactory;
 
 public abstract class AbstractSelectionRenderer extends FeatureCollectionRenderer implements Style {
     public final static int HANDLE_WIDTH = 5;
@@ -68,6 +69,9 @@ public abstract class AbstractSelectionRenderer extends FeatureCollectionRendere
     private Stroke fillStroke = new BasicStroke(1);
     private Color fillColor;
     private boolean filling = true;
+	private int selectionPointSize = 5;
+	private String selectionPointForm = VertexStylesFactory.SQUARE_STYLE;
+	VertexStyle vertexStyle = null;
 	protected LayerViewPanel panel;
     
     public AbstractSelectionRenderer(Object contentID, LayerViewPanel panel, Color color, boolean paintingHandles, boolean filling) {
@@ -78,6 +82,11 @@ public abstract class AbstractSelectionRenderer extends FeatureCollectionRendere
         fillColor = GUIUtil.alphaColor(Color.white, 75);
         this.paintingHandles = paintingHandles;
         this.filling = filling;
+		vertexStyle = VertexStylesFactory.createVertexStyle(selectionPointForm);
+		vertexStyle.setSize(selectionPointSize);
+		vertexStyle.setAlpha(255);
+		vertexStyle.setFillColor(handleFillColor);
+		vertexStyle.setLineColor(handleLineColor);
     }
 
     public String getName() {
@@ -119,9 +128,11 @@ public abstract class AbstractSelectionRenderer extends FeatureCollectionRendere
 
     public void paint(Geometry geometry, Graphics2D g, Viewport viewport)
         throws NoninvertibleTransformException {
+    	if (!viewport.getEnvelopeInModelCoordinates().intersects(geometry.getEnvelopeInternal()))
+    		return;
         Coordinate[] modelCoordinates = geometry.getCoordinates();
-        if ((geometry.getDimension() > 0) || (!paintingHandles)) {  //points will be obscurred by handles anyway
-        StyleUtil.paint(
+        if ((geometry.getDimension() > 0) || (!paintingHandles)) {  //points will be obscurred by handles anyway      
+        	StyleUtil.paint(
             geometry,
             g,
             viewport,
@@ -130,16 +141,16 @@ public abstract class AbstractSelectionRenderer extends FeatureCollectionRendere
             fillColor,
             true,
             lineStroke,
-            lineColor);
+			lineColor);
         }
         if (paintingHandles) {
            //paintHandles(g, coordinates, handleStroke, handleFillColor, handleLineColor, panel.getViewport());
            // LDB: the above method is very slow.  The following code is aproximately equivalent
            //      although it draws a different style of handle (overlapping vs. hollow)
-        	Rectangle2D viewRectangle = viewport.toViewRectangle( 
-        								viewport.getEnvelopeInModelCoordinates());
             Coordinate[] viewCoordinates = viewport.getJava2DConverter().toViewCoordinates(modelCoordinates);
             g.setStroke(handleStroke);
+        	Rectangle2D viewRectangle = viewport.toViewRectangle( 
+    				viewport.getEnvelopeInModelCoordinates());
            for (int i = 0; i < viewCoordinates.length; i++) {
             	Coordinate p = viewCoordinates[i];
             	double x = p.x;
@@ -148,12 +159,7 @@ public abstract class AbstractSelectionRenderer extends FeatureCollectionRendere
                     //Otherwise get "sun.dc.pr.PRException: endPath: bad path" exception [Jon Aquino 10/22/2003]
                     continue;
                 }
-                handle.x = x - (HANDLE_WIDTH / 2);
-                handle.y = y - (HANDLE_WIDTH / 2);
-                g.setColor(handleFillColor);
-                g.fill(handle);
-                g.setColor(handleLineColor);
-                g.draw(handle);                		 
+				vertexStyle.paint(g, new Point2D.Double(x, y)); // [Matthias Scholz 3. Sept. 2010]
             }
         }
     }
@@ -216,6 +222,43 @@ public abstract class AbstractSelectionRenderer extends FeatureCollectionRendere
 
     protected boolean useImageCaching(Map layerToFeaturesMap) {
 		return true;
+	}
+
+	/**
+	 * Sets the Color for the Selection rendering.
+	 *
+	 * @param color
+	 */
+	public void setSelectionLineColor(Color color) {
+		lineColor = color;
+		handleFillColor = color;
+		vertexStyle.setFillColor(handleFillColor);
+	}
+
+	/**
+	 * Sets the pointsize for selected features.
+	 *
+	 * @param selectionPointSize
+	 */
+	public void setSelectionPointSize(int selectionPointSize) {
+		this.selectionPointSize = selectionPointSize;
+		vertexStyle.setSize(selectionPointSize);
+	}
+
+	/**
+	 * Sets the point form. For possible forms please see 
+	 * {@linkplain de.latlon.deejump.plugin.style.VertexStylesFactory VertexStylesFactory}
+	 * constants.
+	 *
+	 * @param selectionPointForm
+	 */
+	public void setSelectionPointForm(String selectionPointForm) {
+		this.selectionPointForm = selectionPointForm;
+		vertexStyle = VertexStylesFactory.createVertexStyle(selectionPointForm);
+		vertexStyle.setSize(selectionPointSize);
+		vertexStyle.setAlpha(255);
+		vertexStyle.setFillColor(handleFillColor);
+		vertexStyle.setLineColor(handleLineColor);
 	}
 
 }

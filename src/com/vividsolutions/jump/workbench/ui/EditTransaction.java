@@ -312,6 +312,9 @@ public class EditTransaction {
     public boolean proposedGeometriesValid() {
         for (int i = 0; i < proposedGeometries.size(); i++) {
             Geometry proposedGeometry = (Geometry) proposedGeometries.get(i);
+            // workaround pending a fix in JTS 1.11.1
+            if (proposedGeometry.getCoordinate()==null) { return true; }
+            // end of workaround
             if (! proposedGeometry.isValid()) { return false; }
         }
         return true;
@@ -360,7 +363,10 @@ public class EditTransaction {
             } else if (
                 allowAddingAndRemovingFeatures
                     && newGeometry.isEmpty()
-                    && !oldGeometry.isEmpty()) {
+                    // the second condition was preventing empty geometries to be removed
+                    // now, it should remove a feature which new geometry is empty,
+                    // but it does not. Why ? [mmichaud 2010-10-16]
+                    /*&& !oldGeometry.isEmpty()*/) { 
                 featuresToRemove.add(feature);
             } else {
                 modifiedFeatures.add(feature);
@@ -397,7 +403,7 @@ public class EditTransaction {
         Assert.isTrue(allowAddingAndRemovingFeatures);
         Assert.isTrue(!features.contains(feature));
         features.add(feature);
-        originalGeometries.add(new Point(null, null, 0));
+        originalGeometries.add(feature.getGeometry().getFactory().createGeometryCollection(new Geometry[0]));
         proposedGeometries.add(feature.getGeometry().clone());
     }
     /**
@@ -408,7 +414,7 @@ public class EditTransaction {
         Assert.isTrue(!features.contains(feature));
         features.add(feature);
         originalGeometries.add(feature.getGeometry().clone());
-        proposedGeometries.add(new Point(null, null, 0));
+        proposedGeometries.add(feature.getGeometry().getFactory().createGeometryCollection(new Geometry[0]));
     }
     public Layer getLayer() {
         return layer;

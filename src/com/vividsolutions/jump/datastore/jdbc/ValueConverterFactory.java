@@ -51,10 +51,14 @@ public class ValueConverterFactory
         && precision == 10 && scale == 0))
         return INTEGER_MAPPER;
 
-    if (classname.equalsIgnoreCase("java.math.BigDecimal"))
+    if (classname.equalsIgnoreCase("java.math.BigDecimal")
+        || sqlType == Types.FLOAT
+        || sqlType == Types.REAL
+        || sqlType == Types.DOUBLE)
         return DOUBLE_MAPPER;
 
-    if (classname.equalsIgnoreCase("java.sql.Timestamp"))
+    if (classname.equalsIgnoreCase("java.sql.Timestamp")
+        || classname.equalsIgnoreCase("java.sql.Date"))
         return DATE_MAPPER;
 
     if (classname.equalsIgnoreCase("java.String"))
@@ -70,7 +74,9 @@ public class ValueConverterFactory
     public Object getValue(ResultSet rs, int columnIndex)
         throws SQLException
     {
-      return new Integer(rs.getInt(columnIndex));
+      Object value = rs.getObject(columnIndex);
+      if (value == null) return null;
+      else return new Integer(rs.getInt(columnIndex));
     }
   }
 
@@ -80,6 +86,8 @@ public class ValueConverterFactory
     public Object getValue(ResultSet rs, int columnIndex)
         throws SQLException
     {
+      Object value = rs.getObject(columnIndex);
+      if (value == null) return null;
       return new Double(rs.getDouble(columnIndex));
     }
   }

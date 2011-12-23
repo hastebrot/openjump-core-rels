@@ -4,7 +4,7 @@ import com.vividsolutions.jump.I18N;
 
 /**
  * Operator contains the definition of common operators.
- * @author Michaël MICHAUD
+ * @author Micha&euml;l MICHAUD
  * @version 0.2 (16 Oct 2005)
  */
 public class Operator {
@@ -38,6 +38,7 @@ public class Operator {
     public final static Operator INTER = new Operator("inter", 'G');
     public final static Operator CONTA = new Operator("conta", 'G');
     public final static Operator WITHI = new Operator("withi", 'G');
+    public final static Operator WSTRI = new Operator("wstri", 'G');
     public final static Operator WDIST = new Operator("wdist", 'G', 1000.0);
     public final static Operator TOUCH = new Operator("touch", 'G');
     public final static Operator CROSS = new Operator("cross", 'G');
@@ -55,7 +56,7 @@ public class Operator {
     };
         
     public static Operator[] GEOMETRIC_OP = new Operator[] {
-        INTER, CONTA, WITHI, WDIST, TOUCH, CROSS, OVERL, DISJO
+        INTER, CONTA, WITHI, WSTRI, WDIST, TOUCH, CROSS, OVERL, DISJO
     };  
     
     public Operator(String key, char type) {

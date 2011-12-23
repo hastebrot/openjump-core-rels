@@ -74,7 +74,7 @@ public class SelectAllLayerItemsPlugIn extends AbstractPlugIn{
 		    context.getFeatureInstaller().addMainMenuItemWithJava14Fix(this,
 		        new String[]
 				{MenuNames.EDIT, MenuNames.SELECTION},
-				I18N.get("org.openjump.core.ui.plugin.edit.SelectAllLayerItemsPlugIn.select-layer-items")+"{pos:8}", 
+				I18N.get("org.openjump.core.ui.plugin.edit.SelectAllLayerItemsPlugIn.select-layer-items"), 
 				false, 
 				null, 
 				createEnableCheck(context.getWorkbenchContext())); //enable check
@@ -91,16 +91,18 @@ public class SelectAllLayerItemsPlugIn extends AbstractPlugIn{
 		int count = 0;	    
 		Layer[] selectedLayers = context.getLayerNamePanel().getSelectedLayers();
 		for (int i = 0; i < selectedLayers.length; i++) {
-			Layer actualLayer = selectedLayers[i]; 		
-			FeatureCollection fc = context.getSelectedLayer(i).getFeatureCollectionWrapper().getWrappee();
-			Collection features = new ArrayList();
-
-			for (Iterator iter = fc.iterator(); iter.hasNext();) {
-				Feature element = (Feature) iter.next();
-				features.add(element);
-				count++;
+			Layer actualLayer = selectedLayers[i];
+			if (actualLayer.isVisible()){
+				FeatureCollection fc = context.getSelectedLayer(i).getFeatureCollectionWrapper().getWrappee();
+				Collection features = new ArrayList();
+	
+				for (Iterator iter = fc.iterator(); iter.hasNext();) {
+					Feature element = (Feature) iter.next();
+					features.add(element);
+					count++;
+				}
+				context.getLayerViewPanel().getSelectionManager().getFeatureSelection().selectItems(actualLayer, features);	
 			}
-			context.getLayerViewPanel().getSelectionManager().getFeatureSelection().selectItems(actualLayer, features);
 		}
 	    final Collection myf = context.getLayerViewPanel().getSelectionManager().getFeaturesWithSelectedItems();
 		context.getWorkbenchFrame().setTimeMessage(

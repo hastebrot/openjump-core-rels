@@ -74,7 +74,7 @@ import com.vividsolutions.jump.workbench.ui.style.StylePanel;
  * @author <a href="mailto:schmitz@lat-lon.de">Andreas Schmitz</a>
  * @author last edited by: $Author: mentaer $
  * 
- * @version $Revision: 1593 $, $Date: 2008-02-14 14:37:00 +0100 (Thu, 14 Feb
+ * @version $Revision: 1884 $, $Date: 2008-02-14 14:37:00 +0100 (Thu, 14 Feb
  *          2008) $
  */
 public class DeeChangeStylesPlugIn extends AbstractPlugIn {
@@ -185,6 +185,8 @@ public class DeeChangeStylesPlugIn extends AbstractPlugIn {
                 }
             }, context);
             return true;
+        }else{
+        	reportNothingToUndoYet(context);
         }
 
         return false;

@@ -69,7 +69,7 @@ public class RenderingManager {
   // default in FeatureCollectionRenderer is 100 features.
 
   /**
-   * @see multiRendererThreadQueue
+   * @see ThreadQueue
    */
   public static final String USE_MULTI_RENDERING_THREAD_QUEUE_KEY = RenderingManager.class.getName()
     + " - USE MULTI RENDERING THREAD QUEUE";
@@ -97,8 +97,8 @@ public class RenderingManager {
 
   // 250 ms wasn't as good as 1 s because less got painted on each repaint,
   // making rendering appear to be slower. [Jon Aquino]
-  // LDB: 400 ms is better when using mouse wheel zooming
-  private Timer repaintTimer = new Timer(400, new ActionListener() {
+  // LDB: changed from 400 to 800 ms after raster stretch mouse wheel zooming
+  private Timer repaintTimer = new Timer(800, new ActionListener() {
     public void actionPerformed(ActionEvent e) {
       for (Iterator i = contentIDToRendererMap.values().iterator(); i.hasNext();) {
         Renderer renderer = (Renderer)i.next();

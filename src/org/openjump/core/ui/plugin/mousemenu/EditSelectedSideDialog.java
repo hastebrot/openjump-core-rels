@@ -45,6 +45,7 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.geom.NoninvertibleTransformException;
 import java.text.DecimalFormat;
+import java.text.ParsePosition;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -186,7 +187,7 @@ public class EditSelectedSideDialog extends JDialog
     private int direction;
     private JSpinner sideSpinner;
     private DecimalFormat df2 = new DecimalFormat("##0.0#");
-    private DecimalFormat df3 = new DecimalFormat("###,###,##0.0##");
+    private DecimalFormat df3 = new DecimalFormat("########0.0##");
     private int currSide;
     private boolean isClockwise;
     private boolean isLineString;
@@ -454,11 +455,6 @@ public class EditSelectedSideDialog extends JDialog
         this(null, "", false);
     }
     
-    private String removeGroupingSeparators(String numberString) {
-    	char comma = df3.getDecimalFormatSymbols().getGroupingSeparator();
-    	return numberString.replaceAll(""+comma, "");
-    }
-
     public void init()//(PlugInContext context)//, Layer selectedSideLayer, Layer editLayer, Layer activeLayer, Collection selectedFeatures)//, ArrayList transactions, EditTransaction transaction)
     {
         SelectionManager selectionManager = context.getLayerViewPanel().getSelectionManager();
@@ -865,8 +861,8 @@ public class EditSelectedSideDialog extends JDialog
             case LENGTH:
             {
                 try
-                {
-                    double length = Double.parseDouble(removeGroupingSeparators(lengthTextField.getText().trim()));
+                {  double length = df3.parse(lengthTextField.getText().trim(), new ParsePosition(0)).doubleValue();
+                    //double length = Double.parseDouble(lengthTextField.getText().trim());
                     if (length <= 0)
                     {
                         reportValidationError(sLengthMustBeGreaterThanZero);
@@ -893,8 +889,8 @@ public class EditSelectedSideDialog extends JDialog
             case ANGLE:
             {
                 try
-                {
-                    double angle = Double.parseDouble(angleTextField.getText().trim());
+                {   double angle = df2.parse(angleTextField.getText().trim(), new ParsePosition(0)).doubleValue();
+                    //double angle = Double.parseDouble(angleTextField.getText().trim());
                     Coordinate startPt = ghostCoords[getStartIndex()];
                     Coordinate endPt = ghostCoords[getEndIndex()];
                     double length = startPt.distance(endPt);
@@ -921,7 +917,8 @@ public class EditSelectedSideDialog extends JDialog
                     Coordinate prevPt = ghostCoords[getPrevIndex()];
                     Coordinate startPt = ghostCoords[getStartIndex()];
                     Coordinate endPt = ghostCoords[getEndIndex()];
-                    double angle = Double.parseDouble(interiorAngleTextField.getText().trim());
+                    double angle = df2.parse(interiorAngleTextField.getText().trim(), new ParsePosition(0)).doubleValue();
+                    //double angle = Double.parseDouble(interiorAngleTextField.getText().trim());
                     double length = startPt.distance(endPt);
                     boolean cw = isClockwise;
                     if (direction == 1) cw = !cw;
@@ -1031,7 +1028,8 @@ public class EditSelectedSideDialog extends JDialog
     {
         try
         {
-            Double.parseDouble(lengthTextField.getText().trim());
+        	df3.parse(lengthTextField.getText().trim(), new ParsePosition(0)).doubleValue();        
+            //Double.parseDouble(lengthTextField.getText().trim());
             return true;
         }
         catch (NumberFormatException e)

@@ -91,9 +91,9 @@ import com.vividsolutions.jump.workbench.ui.style.StylePanel;
  * <code>DeeRenderingStylePanel</code>
  * 
  * @author <a href="mailto:schmitz@lat-lon.de">Andreas Schmitz</a>
- * @author last edited by: $Author: beckerl $
+ * @author last edited by: $Author: michaudm $
  * 
- * @version $Revision: 1778 $, $Date: 2008-01-30 15:42:50 +0100 (Wed, 30 Jan
+ * @version $Revision: 2046 $, $Date: 2008-01-30 15:42:50 +0100 (Wed, 30 Jan
  *          2008) $
  */
 public class DeeRenderingStylePanel extends BasicStylePanel implements StylePanel {
@@ -425,7 +425,8 @@ public class DeeRenderingStylePanel extends BasicStylePanel implements StylePane
             layer.addStyle(newVertexStyle);
 
             if (newVertexStyle.isEnabled()) {
-                layer.getBasicStyle().setEnabled(false);
+                //layer.getBasicStyle().setEnabled(false);
+                layer.getBasicStyle().setRenderingVertices(false);
             }
 
             layer.setSynchronizingLineColor(synchronizeCheckBox.isSelected());

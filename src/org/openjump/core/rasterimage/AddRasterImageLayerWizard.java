@@ -150,7 +150,7 @@ public class AddRasterImageLayerWizard extends AbstractWizardGroup {
 
       int layersAsideImage = context.getLayerManager().getLayerables(Layerable.class).size();
       
-      RasterImageLayer rLayer = new RasterImageLayer(newLayerName, context.getLayerManager(), this.imageFileName, null, envelope);
+      RasterImageLayer rLayer = new RasterImageLayer(newLayerName, context.getLayerManager(), this.imageFileName, null, null, envelope);
       
       // #################################
       
@@ -191,7 +191,7 @@ public class AddRasterImageLayerWizard extends AbstractWizardGroup {
    * @param allwaysLookForTFWExtension
    * @param imageDimensions
    * @param context
-   * @return
+   * @return the RasterImage Envelope
    * @throws IOException
    */
   protected Envelope getGeoReferencing(String fileName, boolean allwaysLookForTFWExtension, Point imageDimensions, WorkbenchContext context) throws IOException{
@@ -287,7 +287,24 @@ public class AddRasterImageLayerWizard extends AbstractWizardGroup {
                   env = new Envelope(upperLeft, lowerRight);
               }
               
-          }
+            }else if(fileName.toLowerCase().endsWith(".flt")){
+                isGeoTiff = true;
+                GridFloat gf = new GridFloat(fileName);
+
+                Coordinate upperLeft = new Coordinate(gf.getXllCorner(), gf.getYllCorner() + gf.getnRows() * gf.getCellSize());
+                Coordinate lowerRight = new Coordinate(gf.getXllCorner() + gf.getnCols() * gf.getCellSize(), gf.getYllCorner());
+
+                env = new Envelope(upperLeft, lowerRight);
+
+            }else if(fileName.toLowerCase().endsWith(".asc")){
+                isGeoTiff = true;
+                GridAscii ga = new GridAscii(fileName);
+
+                Coordinate upperLeft = new Coordinate(ga.getXllCorner(), ga.getYllCorner() + ga.getnRows() * ga.getCellSize());
+                Coordinate lowerRight = new Coordinate(ga.getXllCorner() + ga.getnCols() * ga.getCellSize(), ga.getYllCorner());
+
+                env = new Envelope(upperLeft, lowerRight);
+            }
           
           if (!isGeoTiff || env==null){
               //logger.printDebug(PirolPlugInMessages.getString("no-worldfile-found"));

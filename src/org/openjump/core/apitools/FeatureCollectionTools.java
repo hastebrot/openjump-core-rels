@@ -3,9 +3,9 @@
  *
  * SVN header information:
  *  $Author: mentaer $
- *  $Rev: 1813 $
- *  $Date: 2009-10-20 18:54:21 +0200 (Di, 20. Okt 2009) $
- *  $Id: FeatureCollectionTools.java 1813 2009-10-20 16:54:21Z mentaer $s
+ *  $Rev: 1956 $
+ *  $Date: 2010-06-07 04:24:47 +0200 (Mo, 07. Jun 2010) $
+ *  $Id: FeatureCollectionTools.java 1956 2010-06-07 02:24:47Z mentaer $s
  */
 package org.openjump.core.apitools;
 
@@ -54,7 +54,7 @@ import de.fho.jump.pirol.utilities.debugOutput.PersonalLogger;
  * <br>Project: PIROL (2005),
  * <br>Subproject: Daten- und Wissensmanagement
  * 
- * @version $Rev: 1813 $
+ * @version $Rev: 1956 $
  * [sstein] - 22.Feb.2009 - modified to work in OpenJUMP
  */
 
@@ -196,7 +196,7 @@ public class FeatureCollectionTools extends ToolToMakeYourLifeEasier {
     
     /**
      * Method to calculate means (or modes) for the attributes given. If means or modes 
-     * are calulated depends on the attribute type of each given given attribute.
+     * are calulated depends on the attribute type of each given attribute.
      * This method is hopefully faster, than calculation each mean (mode) in an extra loop,
      * if there are more means (modes) to calculate than one...
      *@param features list of features to calculate mean/modes for
@@ -240,15 +240,15 @@ public class FeatureCollectionTools extends ToolToMakeYourLifeEasier {
         for (int i=0; i<featArray.length; i++){
             currFeat = featArray[i];
             for (int j=0; j<numAttrs; j++){
-                if (atIsNumeric[j]){
+                if (currFeat.getAttribute(attrs[j]) == null){
+                    // value is skipped
+                    FeatureCollectionTools.logger.printMinorError("skipped a value (NULL), when calculating mean for " + attrs[j]);
+                }
+                else if (atIsNumeric[j]){
                     sum = ((Double)sumsOrMaps[j]);
-                    if (currFeat.getAttribute(attrs[j]) != null){
-                        sumsOrMaps[j] = new Double(sum.doubleValue() + ObjectComparator.getDoubleValue(currFeat.getAttribute(attrs[j])));
-                    } else {
-                        // value is skipped
-                        FeatureCollectionTools.logger.printMinorError("skipped a value (NULL), when calculating mean for " + attrs[j]);
-                    }
-                } else {
+                    sumsOrMaps[j] = new Double(sum.doubleValue() + ObjectComparator.getDoubleValue(currFeat.getAttribute(attrs[j])));
+                }
+                else {
                     value = currFeat.getAttribute(attrs[j]);
                     
                     if (value.getClass().equals(String.class)){
@@ -576,7 +576,9 @@ public class FeatureCollectionTools extends ToolToMakeYourLifeEasier {
     }
     
     /**
-     * "deep copys" the given Feature and thereby sets the given feature schema
+     * "deep copys" the given Feature and thereby sets the given feature schema.
+     * The new FeatureSchema should have the same attribute names for copying. 
+     * The new FeatureSchmema can have less or more attributes. 
      *@param feat the feature to be copied
      *@param newFs the new feature schema
      *@return copy of the feature
@@ -589,7 +591,10 @@ public class FeatureCollectionTools extends ToolToMakeYourLifeEasier {
         int numAttr = feat.getSchema().getAttributeCount();
         
         for ( int i=0; i<numAttr; i++ ){
-            newFeat.setAttribute( fs.getAttributeName(i), feat.getAttribute(fs.getAttributeName(i)) );
+        	String attrName = fs.getAttributeName(i);
+        	if (newFs.hasAttribute(attrName)){
+        		newFeat.setAttribute( fs.getAttributeName(i), feat.getAttribute(fs.getAttributeName(i)) );
+        	}           
         }
         
         newFeat.setGeometry((Geometry)feat.getGeometry());
@@ -959,7 +964,11 @@ public class FeatureCollectionTools extends ToolToMakeYourLifeEasier {
      * @param features
      * @param idAttribute (must be Double or Integer)
      * @return Object[0]: an Array of ArrayLists containing features, Object[1]: an Array of int values containing the unique values 
-     * 			used for sorting. Can return null if wrong AttributeType.
+     * 			used for sorting. Can return null if wrong AttributeType. E.g. use<br>
+     * 			Object[] myReturns = FeatureCollectionTools.sortFeaturesIntoListsByAttributeValue(pointFeatures, idAttribute); <br>
+	 *		    individualPts = (ArrayList[])myReturns[0]; <br>
+	 *		    int[] uniqueValues = (int[])myReturns[1]; <br>
+	 *		    Note that the order in which the lists are returned is not sorted!
      */
 	public static Object[] sortFeaturesIntoListsByAttributeValue(FeatureCollection features,
 			String idAttribute) {

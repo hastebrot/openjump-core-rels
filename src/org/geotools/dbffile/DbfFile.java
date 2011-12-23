@@ -3,6 +3,7 @@ package org.geotools.dbffile;
 import com.vividsolutions.jump.io.EndianDataInputStream;
 
 import java.io.*;
+import java.nio.charset.Charset;
 
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -17,7 +18,6 @@ import java.util.Vector;
 
 
 /**
- *
  * This class represents a DBF (or DBase) file.<p>
  * Construct it with a filename (including the .dbf)
  * this causes the header and field definitions to be read.<p>
@@ -50,17 +50,32 @@ public class DbfFile implements DbfConsts {
         }
     };
 
+	private Charset charset = Charset.defaultCharset();
+
     protected DbfFile() {
         //for testing.
     }
 
-    /**
-            * Constructor, opens the file and reads the header infomation.
-            * @param file The file to be opened, includes path and .dbf
-            * @exception java.io.IOException If the file can't be opened.
-            * @exception DbfFileException If there is an error reading header.
-            */
+	/**
+	 * For compatibilty reasons, this method is a wrapper to the new with
+	 * Charset functions.
+	 *
+	 * @param file
+	 * @throws java.io.IOException
+	 * @throws DbfFileException
+	 */
     public DbfFile(String file) throws java.io.IOException, DbfFileException {
+		this(file, Charset.defaultCharset());
+	}
+
+    /**
+     * Constructor, opens the file and reads the header infomation.
+     * @param file The file to be opened, includes path and .dbf
+     * @exception java.io.IOException If the file can't be opened.
+     * @exception DbfFileException If there is an error reading header.
+     */
+    public DbfFile(String file, Charset charset) throws java.io.IOException, DbfFileException {
+		this.charset = charset;
         if (DEBUG) {
             System.out.println(
                 "---->uk.ac.leeds.ccg.dbffile.DbfFile constructed. Will identify itself as DbFi>");
@@ -78,8 +93,8 @@ public class DbfFile implements DbfConsts {
     }
 
     /**
-            * Returns the date of the last update of the file as a string.
-            */
+     * Returns the date of the last update of the file as a string.
+     */
     public String getLastUpdate() {
         String date = last_update_d + "/" + last_update_m + "/" +
             last_update_y;
@@ -88,22 +103,22 @@ public class DbfFile implements DbfConsts {
     }
 
     /**
-            * Returns the number of records in the database file.
-            */
+     * Returns the number of records in the database file.
+     */
     public int getLastRec() {
         return last_rec;
     }
 
     /**
-            * Returns the size of the records in the database file.
-            */
+     * Returns the size of the records in the database file.
+     */
     public int getRecSize() {
         return rec_size;
     }
 
     /**
-            * Returns the number of fields in the records in the database file.
-            */
+     * Returns the number of fields in the records in the database file.
+     */
     public int getNumFields() {
         return numfields;
     }
@@ -119,32 +134,26 @@ public class DbfFile implements DbfConsts {
         switch (type) {
         case 'C':
             realtype = "STRING";
-
             break;
 
         case 'N':
-
             if (fielddef[row].fieldnumdec == 0) {
                 realtype = "INTEGER";
             } else {
                 realtype = "DOUBLE";
             }
-
             break;
 
         case 'F':
             realtype = "DOUBLE";
-
             break;
 
         case 'D': //Added by [Jon Aquino]
             realtype = "DATE";
-
             break;
 
         default:
             realtype = "STRING";
-
             break;
         }
 
@@ -152,16 +161,16 @@ public class DbfFile implements DbfConsts {
     }
 
     /**
-            * Returns the size  of the database file.
-            */
+     * Returns the size  of the database file.
+     */
     public int getFileSize() {
         return filesize;
     }
 
     /**
-      * initailizer, allows the use of multiple constructers in later
-            * versions.
-            */
+     * initailizer, allows the use of multiple constructers in later
+     * versions.
+     */
     private void init(EndianDataInputStream sfile)
         throws IOException, DbfFileException {
         DbfFileHeader head = new DbfFileHeader(sfile);
@@ -180,7 +189,7 @@ public class DbfFile implements DbfConsts {
 
         for (int index = 0; index < numfields; index++) {
             fielddef[index] = new DbfFieldDef();
-            fielddef[index].setup(widthsofar, dFile);
+            fielddef[index].setup(widthsofar, dFile, charset);
             widthsofar += fielddef[index].fieldlen;
         }
 
@@ -188,11 +197,11 @@ public class DbfFile implements DbfConsts {
     }
 
     /**
-            * gets the next record and returns it as a string. This method works on
-            * a sequential stream and can not go backwards. Only useful if you want
-            * to read the whole file in one.
-            * @exception java.io.IOException on read error.
-            */
+     * gets the next record and returns it as a string. This method works on
+     * a sequential stream and can not go backwards. Only useful if you want
+     * to read the whole file in one.
+     * @exception java.io.IOException on read error.
+     */
     public StringBuffer GetNextDbfRec() throws java.io.IOException {
         StringBuffer record = new StringBuffer(rec_size + numfields);
 
@@ -227,11 +236,11 @@ public class DbfFile implements DbfConsts {
     }
 
     /**
-            * fetches the <i>row</i>th row of the file and parses it into an vector
-            * of objects.
-            * @param row - the row to fetch
-            * @exception java.io.IOException on read error.
-            */
+     * fetches the <i>row</i>th row of the file and parses it into an vector
+     * of objects.
+     * @param row - the row to fetch
+     * @exception java.io.IOException on read error.
+     */
     public Vector ParseDbfRecord(int row) throws java.io.IOException {
         return ParseRecord(GetDbfRec(row));
     }
@@ -261,11 +270,11 @@ public class DbfFile implements DbfConsts {
         switch (fielddef[wantedCol].fieldtype) {
             
         case 'C': //character
-            //while ((start < end) && (rec.charAt(end-1) == ' '))  //[sstein 9.Sept.08]
-            while ((start < end) && (rec[end-1] == ' '))  //[sstein 9.Sept.08]
+            while ((start < end) &&
+                   (rec[end-1] == ' ' ||    //[sstein 9.Sept.08]
+                    rec[end-1] == 0))       //[mmichaud 16 june 2010]
                     end--;  //trim trailing spaces
-            //s = rec.substring(start, end);   //[sstein 9.Sept.08]
-            s = new String(rec, start, end - start);  //[sstein 9.Sept.08]
+            s = new String(rec, start, end - start, charset.name());  //[sstein 9.Sept.08] + [Matthias Scholz 3. Sept.10] Charset added
             masterString = uniqueStrings.get(s);
             if (masterString!=null) return masterString;
             else {
@@ -357,13 +366,10 @@ public class DbfFile implements DbfConsts {
             case 'C':
                 record.addElement(t.substring(fielddef[i].fieldstart,
                         fielddef[i].fieldstart + fielddef[i].fieldlen));
-
                 break;
 
             case 'N':
-
                 if (fielddef[i].fieldnumdec == 0) { //its an int
-
                     try {
                         String tt = t.substring(fielddef[i].fieldstart,
                                 fielddef[i].fieldstart + fielddef[i].fieldlen);
@@ -386,7 +392,6 @@ public class DbfFile implements DbfConsts {
                 break;
 
             case 'F':
-
                 try {
                     record.addElement(Double.valueOf(t.substring(
                                 fielddef[i].fieldstart,
@@ -399,7 +404,6 @@ public class DbfFile implements DbfConsts {
                 break;
 
             case 'D':
-
                 //Date formats. This method doesn't seem to be called anywhere in JUMP,
                 //so I'm not going to spend time understanding this method. [Jon Aquino]
                 throw new UnsupportedOperationException();
@@ -639,14 +643,14 @@ public class DbfFile implements DbfConsts {
     }
 
     /**
-            * Internal Class to hold information from the header of the file
-            */
+     * Internal Class to hold information from the header of the file
+     */
     class DbfFileHeader {
         /**
-                * Reads the header of a dbf file.
-                * @param LEDataInputStream file Stream attached to the input file
-                * @exception IOException read error.
-                */
+         * Reads the header of a dbf file.
+         * @param LEDataInputStream file Stream attached to the input file
+         * @exception IOException read error.
+         */
         public DbfFileHeader(EndianDataInputStream file)
             throws IOException {
             getDbfFileHeader(file);
@@ -787,6 +791,7 @@ public class DbfFile implements DbfConsts {
         
         return null;
     }
+    
     private DateFormat lastFormat = DATE_PARSER;
 
     public static void main(String[] args) throws Exception {
